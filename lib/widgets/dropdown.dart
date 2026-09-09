@@ -1,57 +1,37 @@
 import 'package:flutter/material.dart';
-import 'package:hebrewbear/data/dataprovider.dart';
 
-const items = DBtypes;
-class HebrewBearDropdown extends StatefulWidget {
+/// A form dropdown that reports the selected item to [onChanged].
+///
+/// [DropdownButtonFormField] is itself a [FormField] and tracks the selection
+/// internally, so there is nothing to hold in state here.
+class HebrewBearDropdown extends StatelessWidget {
+  const HebrewBearDropdown({
+    super.key,
+    required this.onChanged,
+    required this.defaultItem,
+    required this.listItems,
+  });
 
-  const HebrewBearDropdown({super.key, required this.onChanged, required this.defaultItem, required this.listItems});
-
-  final Function onChanged;
+  final ValueChanged<String> onChanged;
   final String defaultItem;
   final List<String> listItems;
 
   @override
-  State<HebrewBearDropdown> createState() => _HebrewBearDropdownState(defaultItem);
-}
-//read<WordsListNotifier>().words.length
-class _HebrewBearDropdownState extends State<HebrewBearDropdown> {
-  
-  String dropDownValue;
-  _HebrewBearDropdownState(this.dropDownValue);
-  
-  @override
   Widget build(BuildContext context) {
-
-    //final int length = items.length;
-    final int length = widget.listItems.length;
-
-    return Container(
-      child: DropdownButtonFormField<String>(
-        value: dropDownValue,
-        icon: const Icon(Icons.arrow_downward),
-        elevation: 16,
-        //dropdownColor: Colors.white,
-        borderRadius: const BorderRadius.all(Radius.circular(4.0)),
-        decoration: const InputDecoration(
-          border: OutlineInputBorder(),
-        ),
-        focusColor: Colors.transparent,
-        //style: const TextStyle(color: Colors.black),
-        items: [
-          ...List.generate(length, (index) => DropdownMenuItem<String>(
-            // value: items[index],
-            // child: Text(items[index]),
-            value: widget.listItems[index],
-            child: Text(widget.listItems[index]),
-          ))
-        ],
-        onChanged: (String? newValue) => {
-          setState(() {
-            dropDownValue = newValue!;
-            widget.onChanged(newValue);
-          })
-        },
-        ),
+    return DropdownButtonFormField<String>(
+      initialValue: defaultItem,
+      icon: const Icon(Icons.arrow_downward),
+      elevation: 16,
+      borderRadius: const BorderRadius.all(Radius.circular(4.0)),
+      decoration: const InputDecoration(border: OutlineInputBorder()),
+      focusColor: Colors.transparent,
+      items: [
+        for (final item in listItems)
+          DropdownMenuItem<String>(value: item, child: Text(item))
+      ],
+      onChanged: (String? newValue) {
+        if (newValue != null) onChanged(newValue);
+      },
     );
   }
 }

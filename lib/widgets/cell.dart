@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 
 class HebrewBearCell extends StatelessWidget {
+  const HebrewBearCell({super.key, required this.child});
 
   final Widget child;
-
-  const HebrewBearCell({super.key, required this.child });
 
   @override
   Widget build(BuildContext context) {
@@ -13,7 +12,7 @@ class HebrewBearCell extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: child,
-        ),
-      );
+      ),
+    );
   }
 }

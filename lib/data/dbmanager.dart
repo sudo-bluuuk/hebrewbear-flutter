@@ -15,53 +15,47 @@ class WordsSchema extends Table {
 
 LazyDatabase _openConnection() {
   return LazyDatabase(() async {
-
     final dbFolder = await getApplicationDocumentsDirectory();
     final file = File(path.join(dbFolder.path, 'words.sqlite3'));
 
-    return NativeDatabase(file);
+    return NativeDatabase.createInBackground(file);
   });
 }
 
 @DriftDatabase(tables: [WordsSchema])
 class WordsDB extends _$WordsDB {
-
   WordsDB() : super(_openConnection());
+
+  /// Backs the database with [executor] instead of the on-disk file, so tests
+  /// can run against `NativeDatabase.memory()`.
+  WordsDB.withExecutor(super.executor);
+
+  /// Any character in the Hebrew block; the regex engine resolves the escapes.
+  static final _hebrew = RegExp(r'[\u0590-\u05FF]');
 
   @override
   int get schemaVersion => 1;
 
-  Future<List<WordsSchemaData>> getWords() async {
-    return await select(wordsSchema).get();
-  }
-
-  Future<List<WordsSchemaData>> getWordsFiltered(String filter) async {
-    return await (select(wordsSchema)..where((tbl) => tbl.translate.contains(filter))).get();
-  }
-
-  Future<List<WordsSchemaData>> getWordsSmartFiltered(String filter) async {
-    final validJewish = RegExp(r'^[\u0590-\u05FF\u200f\u200e ]+$');
-    if(validJewish.hasMatch(filter)) {
-      return await (select(wordsSchema)..where((tbl) => tbl.root.contains(filter))).get();                     
+  /// Watches the word list, re-emitting whenever a row changes. A Hebrew
+  /// [filter] is matched against the root, anything else against the
+  /// translation.
+  Stream<List<WordsSchemaData>> watchWords(String filter) {
+    final query = select(wordsSchema);
+    if (filter.isNotEmpty) {
+      if (_hebrew.hasMatch(filter)) {
+        query.where((tbl) => tbl.root.contains(filter));
+      } else {
+        query.where((tbl) => tbl.translate.contains(filter));
+      }
     }
-    return await (select(wordsSchema)..where((tbl) => tbl.translate.contains(filter))).get();
+    return query.watch();
   }
 
-  Future<WordsSchemaData> getWord(int id) async {
-    return await (select(wordsSchema)..where((tbl) => tbl.id.equals(id))).getSingle();
+  Future<int> insertWord(WordsSchemaCompanion entity) {
+    return into(wordsSchema).insert(entity);
   }
 
-  Future<bool> updateWord(WordsSchemaCompanion entity) async {
-    return await update(wordsSchema).replace(entity);
+  Future<int> deleteWord(int id) {
+    return (delete(wordsSchema)..where((tbl) => tbl.id.equals(id))).go();
   }
-
-  Future<int> insertWord(WordsSchemaCompanion entity) async {
-    return await into(wordsSchema).insert(entity);
-  }
-
-  Future<int> deleteWord(int id) async {
-    return await (delete(wordsSchema)..where((tbl) => tbl.id.equals(id))).go();
-  }
-
-
 }

@@ -2,7 +2,37 @@
 
 import 'alphabet.dart';
 
-Map<String, String> createInfinitive (String root, String binyan) {
+/// Every template below indexes root[0], root[1] and root[2] directly, so only
+/// triliteral roots can be conjugated. Quadriliterals (תרגם, טלפן) are not
+/// supported yet and fall back to the bare root instead of throwing.
+const int rootLength = 3;
+
+bool isSupportedRoot(String root) => normalizeRoot(root).length == rootLength;
+
+Map<String, String> _finalize(Map<String, String> forms) =>
+    forms.map((person, form) => MapEntry(person, finalizeWord(form)));
+
+Map<String, String> createInfinitive(String root, String binyan) {
+  if (!isSupportedRoot(root)) return {'inf': root};
+  return _finalize(_createInfinitive(normalizeRoot(root), binyan));
+}
+
+Map<String, String> conjugatePresent(String root, String binyan) {
+  if (!isSupportedRoot(root)) return {'root': root};
+  return _finalize(_conjugatePresent(normalizeRoot(root), binyan));
+}
+
+Map<String, String> conjugatePast(String root, String binyan) {
+  if (!isSupportedRoot(root)) return {'root': root};
+  return _finalize(_conjugatePast(normalizeRoot(root), binyan));
+}
+
+Map<String, String> conjugateFuture(String root, String binyan) {
+  if (!isSupportedRoot(root)) return {'root': root};
+  return _finalize(_conjugateFuture(normalizeRoot(root), binyan));
+}
+
+Map<String, String> _createInfinitive(String root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
@@ -49,7 +79,7 @@ Map<String, String> createInfinitive (String root, String binyan) {
     }
 }
 
-Map<String, String> conjugatePresent (String root, String binyan) {
+Map<String, String> _conjugatePresent(String root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
@@ -114,7 +144,7 @@ Map<String, String> conjugatePresent (String root, String binyan) {
       }
 }
 
-Map<String, String> conjugatePast (String root, String binyan) {
+Map<String, String> _conjugatePast(String root, String binyan) {
     
     switch (binyan) {
         case 'Paal':
@@ -220,7 +250,7 @@ Map<String, String> conjugatePast (String root, String binyan) {
     }
 }
 
-Map<String, String> conjugateFuture (String root, String binyan) {
+Map<String, String> _conjugateFuture(String root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
