@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:hebrewbear/data/conjugation.dart';
 import 'package:hebrewbear/data/dbmanager.dart';
 import 'package:hebrewbear/data/wordtypes.dart';
 import 'package:hebrewbear/layouts/conjugation/conjugation.dart';
 import 'package:hebrewbear/widgets/sidebar.dart';
+import 'package:hebrewbear/widgets/wordtypechip.dart';
 import 'package:provider/provider.dart';
 
 const TextStyle hebrewTextStyle = TextStyle(
@@ -46,6 +49,76 @@ class ConjugationButton extends StatelessWidget {
         },
         child: Text(time),
       ),
+    );
+  }
+}
+
+/// The three tense buttons, side by side when they fit and stacked when they
+/// do not.
+///
+/// Flutter has no CSS-style media queries. [LayoutBuilder] is the closer
+/// analogue to a CSS *container* query: it reports the width actually offered
+/// to this widget, so the choice reacts to the row's own box rather than to the
+/// size of the window.
+class ConjugationButtons extends StatelessWidget {
+  const ConjugationButtons({super.key, required this.word});
+
+  final WordsSchemaData word;
+
+  static const List<String> tenses = ["Present", "Past", "Future"];
+
+  /// Horizontal padding Material puts inside an [ElevatedButton], the padding
+  /// [ConjugationButton] adds around each one, and Material's minimum button
+  /// width. These are layout constants, independent of the font.
+  static const double _buttonPadding = 48.0;
+  static const double _buttonSpacing = 20.0;
+  static const double _buttonMinWidth = 64.0;
+
+  /// Width the three buttons need side by side, measured from the labels as
+  /// they will actually be drawn.
+  ///
+  /// A hand-picked breakpoint would be wrong somewhere: the same three labels
+  /// need ~330px in Roboto but ~440px under the fallback font used in widget
+  /// tests, and more again when the user scales text up. Measuring adapts to
+  /// all three.
+  static double rowWidthFor(BuildContext context) {
+    final style = Theme.of(context).textTheme.labelLarge;
+    final scaler = MediaQuery.textScalerOf(context);
+
+    var total = 0.0;
+    for (final tense in tenses) {
+      final painter = TextPainter(
+        text: TextSpan(text: tense, style: style),
+        textDirection: Directionality.of(context),
+        textScaler: scaler,
+      )..layout();
+      total += math.max(_buttonMinWidth, painter.width + _buttonPadding) +
+          _buttonSpacing;
+    }
+    return total;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final threshold = rowWidthFor(context);
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final buttons = [
+          for (final tense in tenses) ConjugationButton(time: tense, word: word)
+        ];
+
+        if (constraints.maxWidth >= threshold) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: buttons,
+          );
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: buttons,
+        );
+      },
     );
   }
 }
@@ -121,19 +194,10 @@ class _WordsListState extends State<WordsList> {
           style: hebrewTextStyle,
         ),
         subtitle: Text(word.translate),
-        trailing: Text(word.type),
+        trailing: WordTypeChip(type: word.type),
       ),
       children: <Widget>[
-        ListTile(
-          title: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              ConjugationButton(time: "Present", word: word),
-              ConjugationButton(time: "Past", word: word),
-              ConjugationButton(time: "Future", word: word),
-            ],
-          ),
-        )
+        ListTile(title: ConjugationButtons(word: word)),
       ],
     );
   }
@@ -144,7 +208,7 @@ class _WordsListState extends State<WordsList> {
       child: ListTile(
         title: Text(word.root, style: hebrewTextStyle),
         subtitle: Text(word.translate),
-        trailing: Text(word.type),
+        trailing: WordTypeChip(type: word.type),
       ),
     );
   }

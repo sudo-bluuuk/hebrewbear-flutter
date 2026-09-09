@@ -8,9 +8,9 @@ import 'package:hebrewbear/widgets/dropdown.dart';
 import 'package:provider/provider.dart';
 
 class AddWord extends StatefulWidget {
-  const AddWord({super.key, required this.type});
+  const AddWord({super.key, required this.category});
 
-  final String type;
+  final WordCategory category;
 
   @override
   State<AddWord> createState() => _AddWordState();
@@ -23,7 +23,13 @@ class _AddWordState extends State<AddWord> {
   final _rootController = TextEditingController();
   final _translateController = TextEditingController();
 
-  String _type = wordTypes.keys.first;
+  late String _type = widget.category.types.first;
+
+  String get _rootHint => switch (widget.category) {
+        WordCategory.verb => 'Enter the three-letter root',
+        WordCategory.noun => 'Enter the noun',
+        WordCategory.adjective => 'Enter the adjective',
+      };
 
   @override
   void dispose() {
@@ -63,7 +69,7 @@ class _AddWordState extends State<AddWord> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Add new ${widget.type}")),
+      appBar: AppBar(title: Text("Add new ${widget.category.label}")),
       body: Center(
         child: Form(
           key: _formKey,
@@ -79,9 +85,9 @@ class _AddWordState extends State<AddWord> {
                     child: TextFormField(
                       controller: _rootController,
                       validator: _validateRoot,
-                      decoration: const InputDecoration(
-                        border: OutlineInputBorder(),
-                        hintText: 'Enter root if verb or word otherwise',
+                      decoration: InputDecoration(
+                        border: const OutlineInputBorder(),
+                        hintText: _rootHint,
                       ),
                     ),
                   ),
@@ -99,15 +105,15 @@ class _AddWordState extends State<AddWord> {
                     ),
                   ),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 10.0),
-                  child: HebrewBearDropdown(
-                    listItems: wordTypes.keys.toList(),
-                    defaultItem: _type,
-                    // Re-validates the root, whose rules depend on the type.
-                    onChanged: (newValue) => setState(() => _type = newValue),
+                if (widget.category.needsTypeChoice)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: HebrewBearDropdown(
+                      listItems: widget.category.types,
+                      defaultItem: _type,
+                      onChanged: (newValue) => setState(() => _type = newValue),
+                    ),
                   ),
-                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [

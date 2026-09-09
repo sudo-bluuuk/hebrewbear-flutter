@@ -14,6 +14,28 @@ struct _MyApplication {
 
 G_DEFINE_TYPE(MyApplication, my_application, GTK_TYPE_APPLICATION)
 
+// Sets the window icon from the asset bundled next to the executable.
+// flutter_launcher_icons has no Linux support, so this is wired up by hand.
+static void my_application_set_icon(GtkWindow* window) {
+  g_autoptr(GError) error = nullptr;
+
+  g_autofree gchar* executable = g_file_read_link("/proc/self/exe", &error);
+  if (executable == nullptr) {
+    g_warning("Failed to locate the executable: %s", error->message);
+    return;
+  }
+
+  g_autofree gchar* executable_dir = g_path_get_dirname(executable);
+  g_autofree gchar* icon_path =
+      g_build_filename(executable_dir, "data", "flutter_assets", "assets",
+                       "icon", "icon.png", nullptr);
+
+  if (!gtk_window_set_icon_from_file(window, icon_path, &error)) {
+    g_warning("Failed to load the window icon from %s: %s", icon_path,
+              error->message);
+  }
+}
+
 // Implements GApplication::activate.
 static void my_application_activate(GApplication* application) {
   MyApplication* self = MY_APPLICATION(application);
@@ -40,13 +62,14 @@ static void my_application_activate(GApplication* application) {
   if (use_header_bar) {
     GtkHeaderBar* header_bar = GTK_HEADER_BAR(gtk_header_bar_new());
     gtk_widget_show(GTK_WIDGET(header_bar));
-    gtk_header_bar_set_title(header_bar, "hebrewbear");
+    gtk_header_bar_set_title(header_bar, "Hebrew Bear");
     gtk_header_bar_set_show_close_button(header_bar, TRUE);
     gtk_window_set_titlebar(window, GTK_WIDGET(header_bar));
   } else {
-    gtk_window_set_title(window, "hebrewbear");
+    gtk_window_set_title(window, "Hebrew Bear");
   }
 
+  my_application_set_icon(window);
   gtk_window_set_default_size(window, 720, 600);
   gtk_widget_show(GTK_WIDGET(window));
 

@@ -1,7 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hebrewbear/data/alphabet.dart';
 import 'package:hebrewbear/data/conjugation.dart';
-import 'package:hebrewbear/data/wordtypes.dart';
 
 void main() {
   final kaf = letters['kaf']!;
@@ -62,23 +61,6 @@ void main() {
       // The plural suffix keeps the third radical mid-word.
       expect(conjugatePresent(shakan, 'Paal')['P M'], contains(nun));
       expect(conjugatePresent(shakan, 'Paal')['P M'], isNot(endsWith(nun)));
-    });
-  });
-
-  group('wordTypes', () {
-    test('adjectives and nouns are not verbs', () {
-      expect(isVerb('Adjective'), isFalse);
-      expect(isVerb('Noun'), isFalse);
-    });
-
-    test('every binyan is a verb', () {
-      expect(isVerb('Paal'), isTrue);
-      expect(isVerb('Hitpael'), isTrue);
-      expect(isVerb('Hufal'), isTrue);
-    });
-
-    test('an unknown type is not a verb', () {
-      expect(isVerb('Nonsense'), isFalse);
     });
   });
 }

@@ -15,6 +15,7 @@ dependencies:
   provider: ^6.1.0
   drift: ^2.20.0
   cupertino_icons: ^1.0.8
+  window_manager: ^0.5.2
 
 dev_dependencies:
   flutter_test:
@@ -22,11 +23,33 @@ dev_dependencies:
   flutter_lints: ^6.0.0
   drift_dev: ^2.20.0
   build_runner: ^2.4.0
+  flutter_launcher_icons: ^0.14.0
 
 flutter:
   uses-material-design: true
+
+  assets:
+    - assets/icon/icon.png
 
   fonts:
     - family: Noto Serif Hebrew
       fonts:
         - asset: fonts/Noto_Serif_Hebrew/static/NotoSerifHebrew/NotoSerifHebrew-Regular.ttf
+
+flutter_launcher_icons:
+  image_path: "assets/icon/icon.png"
+  android: true
+  adaptive_icon_background: "#F7E7CC"
+  adaptive_icon_foreground: "assets/icon/icon_foreground.png"
+  ios: true
+  remove_alpha_ios: true
+  background_color_ios: "#F7E7CC"
+  web:
+    generate: true
+    background_color: "#F7E7CC"
+    theme_color: "#F7E7CC"
+  windows:
+    generate: true
+    icon_size: 256
+  macos:
+    generate: true
