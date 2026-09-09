@@ -1,11 +1,12 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
-import 'package:hebrewbear/data/conjugation.dart';
 import 'package:hebrewbear/data/dbmanager.dart';
 import 'package:hebrewbear/data/wordtypes.dart';
 import 'package:hebrewbear/layouts/conjugation/conjugation.dart';
+import 'package:hebrewbear/widgets/categoryfilter.dart';
 import 'package:hebrewbear/widgets/sidebar.dart';
+import 'package:hebrewbear/widgets/stripe.dart';
 import 'package:hebrewbear/widgets/wordtypechip.dart';
 import 'package:provider/provider.dart';
 
@@ -20,18 +21,6 @@ class ConjugationButton extends StatelessWidget {
   final String time;
   final WordsSchemaData word;
 
-  Map<String, String> _getConjugation() {
-    switch (time) {
-      case "Past":
-        return conjugatePast(word.root, word.type);
-      case "Future":
-        return conjugateFuture(word.root, word.type);
-      case "Present":
-      default:
-        return conjugatePresent(word.root, word.type);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -39,12 +28,7 @@ class ConjugationButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: () {
           Navigator.of(context).push(MaterialPageRoute(
-            builder: (context) => Conjugation(
-              word: word,
-              infinitive: createInfinitive(word.root, word.type),
-              result: _getConjugation(),
-              time: time,
-            ),
+            builder: (context) => Conjugation(word: word, time: time),
           ));
         },
         child: Text(time),
@@ -135,8 +119,9 @@ class _WordsListState extends State<WordsList> {
 
   /// Held in state rather than built inline: rebuilding the stream on every
   /// frame would re-run the query on each keystroke and drop the results.
-  Stream<List<WordsSchemaData>>? _words;
+  Stream<List<WordEntry>>? _words;
   String _filter = '';
+  WordCategory? _category;
 
   @override
   void initState() {
@@ -147,8 +132,11 @@ class _WordsListState extends State<WordsList> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
-    _words ??= context.read<WordsDB>().watchWords(_filter);
+    _words ??= _query();
   }
+
+  Stream<List<WordEntry>> _query() =>
+      context.read<WordsDB>().watchWords(_filter, category: _category);
 
   @override
   void dispose() {
@@ -158,10 +146,20 @@ class _WordsListState extends State<WordsList> {
 
   void _onFilterChanged() {
     if (_filterController.text == _filter) return;
-    setState(() {
-      _filter = _filterController.text;
-      _words = context.read<WordsDB>().watchWords(_filter);
-    });
+    _filter = _filterController.text;
+    setState(() => _words = _query());
+  }
+
+  void _onCategoryChanged(WordCategory? category) {
+    if (category == _category) return;
+    _category = category;
+    setState(() => _words = _query());
+  }
+
+  String get _emptyMessage {
+    if (_filter.isNotEmpty) return "Nothing matches '$_filter'.";
+    if (_category != null) return "No ${_category!.label}s yet.";
+    return "No words yet — add one from the menu.";
   }
 
   Future<bool?> _confirmDelete(BuildContext context) {
@@ -186,12 +184,28 @@ class _WordsListState extends State<WordsList> {
     );
   }
 
-  Widget _buildVerb(WordsSchemaData word) {
+  Widget _buildVerb(WordEntry entry) {
+    final word = entry.word;
     return ExpansionTile(
       title: ListTile(
-        title: Text(
-          "${createInfinitive(word.root, word.type).values.first} (${word.root})",
-          style: hebrewTextStyle,
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                "${entry.infinitive} (${word.root})",
+                style: hebrewTextStyle,
+              ),
+            ),
+            if (entry.isInfinitiveManual)
+              Padding(
+                padding: const EdgeInsets.only(left: 6.0),
+                child: Icon(
+                  Icons.edit_note,
+                  size: 18.0,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+          ],
         ),
         subtitle: Text(word.translate),
         trailing: WordTypeChip(type: word.type),
@@ -221,16 +235,30 @@ class _WordsListState extends State<WordsList> {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(10.0),
-        child: TextField(
-          controller: _filterController,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Search...',
-          ),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _filterController,
+                decoration: const InputDecoration(
+                  border: OutlineInputBorder(),
+                  hintText: 'Search...',
+                ),
+              ),
+            ),
+            const SizedBox(width: 10.0),
+            SizedBox(
+              width: 136.0,
+              child: CategoryFilter(
+                value: _category,
+                onChanged: _onCategoryChanged,
+              ),
+            ),
+          ],
         ),
       ),
       drawer: const HebrewBearSidebar(),
-      body: StreamBuilder<List<WordsSchemaData>>(
+      body: StreamBuilder<List<WordEntry>>(
         stream: _words,
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -242,24 +270,25 @@ class _WordsListState extends State<WordsList> {
 
           final words = snapshot.data!;
           if (words.isEmpty) {
-            return Center(
-              child: Text(_filter.isEmpty
-                  ? "No words yet — add one from the menu."
-                  : "Nothing matches '$_filter'."),
-            );
+            return Center(child: Text(_emptyMessage));
           }
 
           return ListView.builder(
             itemCount: words.length,
             itemBuilder: (context, index) {
-              final word = words[index];
+              final entry = words[index];
+              final word = entry.word;
               return Dismissible(
                 key: ValueKey(word.id),
                 confirmDismiss: (direction) => _confirmDelete(context),
                 onDismissed: (direction) =>
                     context.read<WordsDB>().deleteWord(word.id),
                 background: Container(color: Theme.of(context).focusColor),
-                child: isVerb(word.type) ? _buildVerb(word) : _buildWord(word),
+                child: ColoredBox(
+                  color: stripeColor(context, index),
+                  child:
+                      isVerb(word.type) ? _buildVerb(entry) : _buildWord(word),
+                ),
               );
             },
           );

@@ -29,5 +29,8 @@ enum WordCategory {
   final String label;
   final List<String> types;
 
+  /// [label] capitalised, for use where it starts a phrase.
+  String get title => label[0].toUpperCase() + label.substring(1);
+
   bool get needsTypeChoice => types.length > 1;
 }
