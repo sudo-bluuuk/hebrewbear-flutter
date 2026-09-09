@@ -2,34 +2,57 @@
 
 import 'alphabet.dart';
 
-/// Every template below indexes root[0], root[1] and root[2] directly, so only
-/// triliteral roots can be conjugated. Quadriliterals (תרגם, טלפן) are not
-/// supported yet and fall back to the bare root instead of throwing.
-const int rootLength = 3;
+/// Every template below is written against three slots. Roots that do not fit
+/// them fall back to the bare root rather than throwing.
+const int triliteralLength = 3;
+const int quadriliteralLength = 4;
 
-bool isSupportedRoot(String root) => normalizeRoot(root).length == rootLength;
+/// The only binyanim that take a four-letter root; the other four never do, so
+/// טלפן in Paal is a mistake rather than a gap in the rules.
+const Set<String> quadriliteralBinyanim = {'Piel', 'Pual', 'Hitpael'};
+
+bool isSupportedRoot(String root, String binyan) {
+  final length = normalizeRoot(root).length;
+  if (length == triliteralLength) return true;
+  return length == quadriliteralLength &&
+      quadriliteralBinyanim.contains(binyan);
+}
+
+/// The three slots the templates are written against.
+///
+/// A four-letter root is not a separate pattern: it behaves like a triliteral
+/// whose middle radical is a cluster of two consonants. תרגם therefore fills the
+/// same Piel template as דבר, with ר + sheva + ג sitting in the middle slot —
+/// which is why four-letter roots need no templates of their own.
+List<String> rootSlots(String root) {
+  final bare = normalizeRoot(root);
+  if (bare.length == quadriliteralLength) {
+    return [bare[0], '${bare[1]}${vowels['_e']}${bare[2]}', bare[3]];
+  }
+  return [bare[0], bare[1], bare[2]];
+}
 
 Map<String, String> _finalize(Map<String, String> forms) =>
     forms.map((person, form) => MapEntry(person, finalizeWord(form)));
 
 Map<String, String> createInfinitive(String root, String binyan) {
-  if (!isSupportedRoot(root)) return {'inf': root};
-  return _finalize(_createInfinitive(normalizeRoot(root), binyan));
+  if (!isSupportedRoot(root, binyan)) return {'inf': root};
+  return _finalize(_createInfinitive(rootSlots(root), binyan));
 }
 
 Map<String, String> conjugatePresent(String root, String binyan) {
-  if (!isSupportedRoot(root)) return {'root': root};
-  return _finalize(_conjugatePresent(normalizeRoot(root), binyan));
+  if (!isSupportedRoot(root, binyan)) return {'root': root};
+  return _finalize(_conjugatePresent(rootSlots(root), binyan));
 }
 
 Map<String, String> conjugatePast(String root, String binyan) {
-  if (!isSupportedRoot(root)) return {'root': root};
-  return _finalize(_conjugatePast(normalizeRoot(root), binyan));
+  if (!isSupportedRoot(root, binyan)) return {'root': root};
+  return _finalize(_conjugatePast(rootSlots(root), binyan));
 }
 
 Map<String, String> conjugateFuture(String root, String binyan) {
-  if (!isSupportedRoot(root)) return {'root': root};
-  return _finalize(_conjugateFuture(normalizeRoot(root), binyan));
+  if (!isSupportedRoot(root, binyan)) return {'root': root};
+  return _finalize(_conjugateFuture(rootSlots(root), binyan));
 }
 
 /// The Hitpael prefix consonant together with the first radical, written in the
@@ -49,10 +72,11 @@ Map<String, String> conjugateFuture(String root, String binyan) {
 /// Not handled: a first radical of ד, ט or ת, where the prefix assimilates into
 /// the radical instead (תמם -> הִתַּמֵּם). Those verbs are rare and the rule was not
 /// verified, so they still come out with both consonants written.
-String hitpaelOnset(String root, [String between = '']) {
-  final first = root[0];
-  if (!_swapsWithPrefix.contains(first)) return '${letters['tav']}$between$first';
-  return '$first$between${_prefixBefore[first] ?? letters['tav']}';
+String hitpaelOnset(String firstRadical, [String between = '']) {
+  if (!_swapsWithPrefix.contains(firstRadical)) {
+    return '${letters['tav']}$between$firstRadical';
+  }
+  return '$firstRadical$between${_prefixBefore[firstRadical] ?? letters['tav']}';
 }
 
 /// First radicals that trade places with the prefix.
@@ -70,7 +94,7 @@ final Map<String, String> _prefixBefore = {
   letters['zayin']!: letters['dalet']!,
 };
 
-Map<String, String> _createInfinitive(String root, String binyan) {
+Map<String, String> _createInfinitive(List<String> root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
@@ -96,7 +120,7 @@ Map<String, String> _createInfinitive(String root, String binyan) {
             };
         case 'Hitpael': 
             return <String, String> {
-                'inf': "לה${vowels['i']}${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}"
+                'inf': "לה${vowels['i']}${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['e']}${root[2]}"
             };
         case 'Nifal':
             return <String, String> {
@@ -112,12 +136,12 @@ Map<String, String> _createInfinitive(String root, String binyan) {
             };
         default:
             return {
-                'inf': root
+                'inf': root.join()
             };
     }
 }
 
-Map<String, String> _conjugatePresent(String root, String binyan) {
+Map<String, String> _conjugatePresent(List<String> root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
@@ -151,10 +175,10 @@ Map<String, String> _conjugatePresent(String root, String binyan) {
             };
         case 'Hitpael': 
             return <String, String> {
-                'S M': 'מ${vowels['i']}${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}', //ae
-                'S F': 'מ${vowels['i']}${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['E']}${root[2]}${vowels['E']}ת',
-                'P M': 'מ${vowels['i']}${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}${vowels['i']}ים',
-                'P F': 'מ${vowels['i']}${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וֹת'
+                'S M': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}', //ae
+                'S F': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['E']}${root[2]}${vowels['E']}ת',
+                'P M': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}${vowels['i']}ים',
+                'P F': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וֹת'
             };
         case 'Nifal':
             return <String, String> {
@@ -178,11 +202,11 @@ Map<String, String> _conjugatePresent(String root, String binyan) {
                 'P F': 'מוּ${root[0]}${vowels['_e']}${root[1]}${vowels['A']}${root[2]}וֹת'
             };
         default:
-          return <String, String> {'root': root};
+          return <String, String> {'root': root.join()};
       }
 }
 
-Map<String, String> _conjugatePast(String root, String binyan) {
+Map<String, String> _conjugatePast(List<String> root, String binyan) {
     
     switch (binyan) {
         case 'Paal':
@@ -237,15 +261,15 @@ Map<String, String> _conjugatePast(String root, String binyan) {
             };
         case 'Hitpael':
             return <String, String> {
-                'I': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['i']}י',
-                'You F': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['_e']}',
-                'You M': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['A']}',
-                'He': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'She': 'הִ${hitpaelOnset(root)}${vowels['_e']}${root[1]}${vowels['a']}${root[2]}${vowels['A']}ה',
-                'We': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}נוּ',
-                'You M P': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
-                'You F P': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
-                'They': 'הִ${hitpaelOnset(root)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וּ'
+                'I': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['i']}י',
+                'You F': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['_e']}',
+                'You M': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['A']}',
+                'He': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
+                'She': 'הִ${hitpaelOnset(root[0])}${vowels['_e']}${root[1]}${vowels['a']}${root[2]}${vowels['A']}ה',
+                'We': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}נוּ',
+                'You M P': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
+                'You F P': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
+                'They': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וּ'
             };
         case 'Nifal':
             return <String, String> {
@@ -284,11 +308,11 @@ Map<String, String> _conjugatePast(String root, String binyan) {
                 'They': 'הֻ${root[0]}${vowels['_e']}${root[1]}${vowels['a']}${root[2]}וּ'
             };
         default:
-            return {'root': root};
+            return {'root': root.join()};
     }
 }
 
-Map<String, String> _conjugateFuture(String root, String binyan) {
+Map<String, String> _conjugateFuture(List<String> root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
@@ -349,14 +373,14 @@ Map<String, String> _conjugateFuture(String root, String binyan) {
             };
         case 'Hitpael':
             return <String, String> {
-                'I': 'אֶ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'We': 'נִ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'You M': 'תִּ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'You F': 'תִּ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}${vowels['i']}י',
-                'You': 'תִּ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}וּ',
-                'He': 'יִ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'She': 'תִּ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'They': 'יִ${hitpaelOnset(root, vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}וּ'
+                'I': 'אֶ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
+                'We': 'נִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
+                'You M': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
+                'You F': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}${vowels['i']}י',
+                'You': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}וּ',
+                'He': 'יִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
+                'She': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
+                'They': 'יִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}וּ'
             };
         case 'Nifal':
             return <String, String> {
@@ -392,6 +416,6 @@ Map<String, String> _conjugateFuture(String root, String binyan) {
                 'They': 'יֻ${root[0]}${vowels['_e']}${root[1]}${vowels['_e']}${root[2]}וּ'
             };
         default:
-            return {'root': root};
+            return {'root': root.join()};
     }
 }

@@ -41,8 +41,11 @@ class _AddWordState extends State<AddWord> {
   String? _validateRoot(String? value) {
     if (value == null || value.isEmpty) return 'Please enter some text';
     if (!_hebrewOnly.hasMatch(value)) return 'Only Hebrew allowed';
-    if (isVerb(_type) && !isSupportedRoot(value)) {
-      return 'Verb roots must be exactly $rootLength letters';
+    if (isVerb(_type) && !isSupportedRoot(value, _type)) {
+      return quadriliteralBinyanim.contains(_type)
+          ? 'Roots in $_type must be $triliteralLength or '
+              '$quadriliteralLength letters'
+          : 'Roots in $_type must be exactly $triliteralLength letters';
     }
     return null;
   }

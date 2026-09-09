@@ -7,22 +7,24 @@ void main() {
       form.split('').where(isHebrewLetter).join();
 
   group('hitpaelOnset', () {
+    // Takes the first radical, which after rootSlots is one letter for a
+    // triliteral and still one letter for a quadriliteral.
     test('an ordinary radical keeps the prefix in front', () {
-      expect(hitpaelOnset('לבש'), 'תל');
-      expect(hitpaelOnset('פעל'), 'תפ');
+      expect(hitpaelOnset(letters['lamed']!), 'תל');
+      expect(hitpaelOnset(letters['pe']!), 'תפ');
     });
 
     test('a sibilant swaps with the prefix', () {
-      expect(hitpaelOnset('שתף'), 'שת');
-      expect(hitpaelOnset('סדר'), 'סת');
+      expect(hitpaelOnset(letters['shin']!), 'שת');
+      expect(hitpaelOnset(letters['samekh']!), 'סת');
     });
 
     test('tsadi swaps and turns the prefix into tet', () {
-      expect(hitpaelOnset('צלם'), 'צט');
+      expect(hitpaelOnset(letters['tsadi']!), 'צט');
     });
 
     test('zayin swaps and turns the prefix into dalet', () {
-      expect(hitpaelOnset('זקן'), 'זד');
+      expect(hitpaelOnset(letters['zayin']!), 'זד');
     });
 
     test('the vowel between keeps its slot rather than moving', () {
@@ -33,8 +35,8 @@ void main() {
 
       // Prefix first: ת takes the vowel. Swapped: the radical takes it, and
       // the vowel stays in the same slot either way.
-      expect(hitpaelOnset('לבש', sheva), '$tav$sheva$lamed');
-      expect(hitpaelOnset('שתף', sheva), '$shin$sheva$tav');
+      expect(hitpaelOnset(lamed, sheva), '$tav$sheva$lamed');
+      expect(hitpaelOnset(shin, sheva), '$shin$sheva$tav');
     });
   });
 

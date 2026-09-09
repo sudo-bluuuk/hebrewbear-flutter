@@ -17,7 +17,7 @@ void main() {
   group('normalizeRoot', () {
     test('strips niqqud so the root stays indexable', () {
       expect(normalizeRoot('$kaf$hiriq$tav$bet'), katav);
-      expect(isSupportedRoot('$kaf$hiriq$tav$bet'), isTrue);
+      expect(isSupportedRoot('$kaf$hiriq$tav$bet', 'Paal'), isTrue);
     });
 
     test('rewrites final letters back to their base shape', () {
@@ -27,17 +27,28 @@ void main() {
 
   group('root length', () {
     test('a triliteral root conjugates', () {
-      expect(isSupportedRoot(katav), isTrue);
+      expect(isSupportedRoot(katav, 'Paal'), isTrue);
       expect(conjugatePresent(katav, 'Paal'), hasLength(4));
       expect(conjugatePast(katav, 'Paal'), hasLength(9));
       expect(conjugateFuture(katav, 'Paal'), hasLength(8));
     });
 
-    test('a quadriliteral root falls back instead of throwing', () {
+    test('a quadriliteral root conjugates in the binyanim that take one', () {
       final quad = '$katav$nun';
-      expect(isSupportedRoot(quad), isFalse);
-      expect(createInfinitive(quad, 'Piel'), {'inf': quad});
-      expect(conjugatePast(quad, 'Piel'), {'root': quad});
+      for (final binyan in quadriliteralBinyanim) {
+        expect(isSupportedRoot(quad, binyan), isTrue, reason: binyan);
+        expect(createInfinitive(quad, binyan), isNot({'inf': quad}),
+            reason: binyan);
+      }
+    });
+
+    test('a quadriliteral root falls back in the binyanim that do not', () {
+      final quad = '$katav$nun';
+      for (final binyan in ['Paal', 'Hiphil', 'Nifal', 'Hufal']) {
+        expect(isSupportedRoot(quad, binyan), isFalse, reason: binyan);
+        expect(createInfinitive(quad, binyan), {'inf': quad}, reason: binyan);
+        expect(conjugatePast(quad, binyan), {'root': quad}, reason: binyan);
+      }
     });
 
     test('a too-short root falls back instead of throwing', () {
