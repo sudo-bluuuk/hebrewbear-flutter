@@ -7,9 +7,15 @@ import 'alphabet.dart';
 const int triliteralLength = 3;
 const int quadriliteralLength = 4;
 
-/// The only binyanim that take a four-letter root; the other four never do, so
-/// טלפן in Paal is a mistake rather than a gap in the rules.
-const Set<String> quadriliteralBinyanim = {'Piel', 'Pual', 'Hitpael'};
+/// The intensive binyanim, built on a doubled middle radical.
+///
+/// That doubling is also why these are the only binyanim taking a four-letter
+/// root: the doubled slot holds two consonants instead of one doubled one.
+const Set<String> intensiveBinyanim = {'Piel', 'Pual', 'Hitpael'};
+
+/// The same three, named for the rule that cares about root length: טלפן in
+/// Paal is a mistake rather than a gap in the rules.
+const Set<String> quadriliteralBinyanim = intensiveBinyanim;
 
 bool isSupportedRoot(String root, String binyan) {
   final length = normalizeRoot(root).length;
@@ -94,6 +100,25 @@ final Map<String, String> _prefixBefore = {
   letters['zayin']!: letters['dalet']!,
 };
 
+/// The middle radical carrying the doubling dagesh of the intensive binyanim.
+///
+/// Two cases get no dot. א ה ח ע ר cannot take one at all — ה ח ע are simply
+/// written undoubled, while א and ר additionally lengthen the vowel before
+/// them (לְבָרֵךְ, not לְבַרֵךְ), which is a verified rule this does not yet apply.
+/// A four-letter root's middle slot is a two-consonant cluster and is not
+/// doubled either; the dagesh seen in תִּרְגֵּם is a dagesh kal, a different rule.
+///
+/// Takes the following [vowel] so it can emit consonant + vowel + dagesh, which
+/// is Unicode canonical order. Appending the dagesh straight after the letter
+/// renders the same but does not compare equal to Hebrew text from anywhere
+/// else, which would make every vocalised expectation untypable.
+String geminate(String middleSlot, String vowel) {
+  if (middleSlot.length != 1 || rejectsDagesh.contains(middleSlot)) {
+    return '$middleSlot$vowel';
+  }
+  return '$middleSlot$vowel$dagesh';
+}
+
 Map<String, String> _createInfinitive(List<String> root, String binyan) {
 
     switch(binyan) {
@@ -108,19 +133,19 @@ Map<String, String> _createInfinitive(List<String> root, String binyan) {
                 };
             else
                 return <String, String> {
-                    'inf': "ל${vowels['i']}${root[0]}${root[1]}וֹ${root[2]}"
+                    'inf': "ל${vowels['i']}${root[0]}${vowels['_e']}${root[1]}וֹ${root[2]}"
                 };
         case 'Piel':
             return <String, String> {
-                'inf': "ל${vowels['e']}${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}"
+                'inf': "ל${vowels['_e']}${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}"
             };
         case 'Hiphil':
             return <String, String> {
-                'inf': "לה${vowels['a']}${root[0]}${vowels['a']}${root[1]}${vowels['i']}י${root[2]}"
+                'inf': "ל${vowels['_e']}ה${vowels['a']}${root[0]}${vowels['_e']}${root[1]}${vowels['i']}י${root[2]}"
             };
         case 'Hitpael': 
             return <String, String> {
-                'inf': "לה${vowels['i']}${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['e']}${root[2]}"
+                'inf': "ל${vowels['_e']}ה${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}"
             };
         case 'Nifal':
             return <String, String> {
@@ -128,7 +153,7 @@ Map<String, String> _createInfinitive(List<String> root, String binyan) {
             };
         case 'Pual':
             return <String, String> {
-                'inf': "מְ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}"
+                'inf': "מְ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}"
             };
         case 'Hufal':
             return <String, String> {
@@ -161,10 +186,10 @@ Map<String, String> _conjugatePresent(List<String> root, String binyan) {
                 }; // divide in 3, check root length maybe?
         case 'Piel':
             return <String, String> {
-                'S M': 'מְ${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}', //ae
-                'S F': 'מְ${root[0]}${vowels['a']}${root[1]}${vowels['E']}${root[2]}${vowels['E']}ת',
-                'P M': 'מְ${root[0]}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}${vowels['i']}ים',
-                'P F': 'מְ${root[0]}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וֹת'
+                'S M': 'מְ${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}', //ae
+                'S F': 'מְ${root[0]}${vowels['a']}${geminate(root[1], vowels['E']!)}${root[2]}${vowels['E']}ת',
+                'P M': 'מְ${root[0]}${vowels['a']}${geminate(root[1], vowels['_e']!)}${root[2]}${vowels['i']}ים',
+                'P F': 'מְ${root[0]}${vowels['a']}${geminate(root[1], vowels['_e']!)}${root[2]}וֹת'
             };
         case 'Hiphil':
             return <String, String> {
@@ -175,10 +200,10 @@ Map<String, String> _conjugatePresent(List<String> root, String binyan) {
             };
         case 'Hitpael': 
             return <String, String> {
-                'S M': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}', //ae
-                'S F': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['E']}${root[2]}${vowels['E']}ת',
-                'P M': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}${vowels['i']}ים',
-                'P F': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וֹת'
+                'S M': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}', //ae
+                'S F': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['E']!)}${root[2]}${vowels['E']}ת',
+                'P M': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['_e']!)}${root[2]}${vowels['i']}ים',
+                'P F': 'מ${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['_e']!)}${root[2]}וֹת'
             };
         case 'Nifal':
             return <String, String> {
@@ -189,10 +214,10 @@ Map<String, String> _conjugatePresent(List<String> root, String binyan) {
             };
         case 'Pual':
             return <String, String> {
-                'S M': 'מְ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}', 
-                'S F': 'מְ${root[0]}${vowels['u']}${root[1]}${vowels['E']}${root[2]}${vowels['E']}ת',
-                'P M': 'מְ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}${vowels['i']}ים',
-                'P F': 'מְ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}וֹת'
+                'S M': 'מְ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}', 
+                'S F': 'מְ${root[0]}${vowels['u']}${geminate(root[1], vowels['E']!)}${root[2]}${vowels['E']}ת',
+                'P M': 'מְ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}${vowels['i']}ים',
+                'P F': 'מְ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}וֹת'
             };
         case 'Hufal':
             return <String, String> {
@@ -236,15 +261,15 @@ Map<String, String> _conjugatePast(List<String> root, String binyan) {
                 };
         case 'Piel':
             return <String, String> {
-                'I': '${root[0]}${vowels['i']}י${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['i']}י',
-                'You F': '${root[0]}${vowels['i']}י${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['_e']}',
-                'You M': '${root[0]}${vowels['i']}י${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['A']}',
-                'He': '${root[0]}${vowels['i']}י${root[1]}${vowels['e']}${root[2]}',
-                'She': '${root[0]}${vowels['i']}י${root[1]}${vowels['_e']}${root[2]}${vowels['A']}ה',
-                'We': '${root[0]}${vowels['i']}י${root[1]}${vowels['a']}${root[2]}${vowels['_e']}נוּ',
-                'You M P': '${root[0]}${vowels['i']}י${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
-                'You F P': '${root[0]}${vowels['i']}י${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
-                'They': '${root[0]}${vowels['i']}י${root[1]}${vowels['_e']}${root[2]}וּ'
+                'I': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['i']}י',
+                'You F': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['_e']}',
+                'You M': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['A']}',
+                'He': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['e']!)}${root[2]}',
+                'She': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['_e']!)}${root[2]}${vowels['A']}ה',
+                'We': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}נוּ',
+                'You M P': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
+                'You F P': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
+                'They': '${root[0]}${vowels['i']}י${geminate(root[1], vowels['_e']!)}${root[2]}וּ'
             };
         case 'Hiphil':
             return <String, String> {
@@ -261,15 +286,15 @@ Map<String, String> _conjugatePast(List<String> root, String binyan) {
             };
         case 'Hitpael':
             return <String, String> {
-                'I': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['i']}י',
-                'You F': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['_e']}',
-                'You M': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['A']}',
-                'He': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'She': 'הִ${hitpaelOnset(root[0])}${vowels['_e']}${root[1]}${vowels['a']}${root[2]}${vowels['A']}ה',
-                'We': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}נוּ',
-                'You M P': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
-                'You F P': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
-                'They': 'הִ${hitpaelOnset(root[0])}${vowels['a']}${root[1]}${vowels['_e']}${root[2]}וּ'
+                'I': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['i']}י',
+                'You F': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['_e']}',
+                'You M': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['A']}',
+                'He': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'She': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['_e']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['A']}ה',
+                'We': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}נוּ',
+                'You M P': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
+                'You F P': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
+                'They': 'הִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['_e']!)}${root[2]}וּ'
             };
         case 'Nifal':
             return <String, String> {
@@ -285,15 +310,15 @@ Map<String, String> _conjugatePast(List<String> root, String binyan) {
             };
         case 'Pual':
             return <String, String> {
-                'I': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['i']}י',
-                'You F': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['_e']}',
-                'You M': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['A']}',
-                'He': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}',
-                'She': '${root[0]}${vowels['u']}${root[1]}${root[2]}${vowels['A']}ה',
-                'We': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}נוּ',
-                'You M P': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
-                'You F P': '${root[0]}${vowels['u']}${root[1]}${vowels['a']}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
-                'They': '${root[0]}${vowels['u']}${root[1]}${vowels['_e']}${root[2]}וּ'
+                'I': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['i']}י',
+                'You F': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['_e']}',
+                'You M': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['A']}',
+                'He': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}',
+                'She': '${root[0]}${vowels['u']}${geminate(root[1], '')}${root[2]}${vowels['A']}ה',
+                'We': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}נוּ',
+                'You M P': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['E']}ם',
+                'You F P': '${root[0]}${vowels['u']}${geminate(root[1], vowels['a']!)}${root[2]}${vowels['_e']}ת${vowels['E']}ן',
+                'They': '${root[0]}${vowels['u']}${geminate(root[1], vowels['_e']!)}${root[2]}וּ'
             };
         case 'Hufal':
             return <String, String> {
@@ -351,14 +376,14 @@ Map<String, String> _conjugateFuture(List<String> root, String binyan) {
                 };
         case 'Piel':
             return <String, String> {
-                'I': 'אֲ${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'We': 'נְ${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'You M': 'תְּ${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'You F': 'תְּ${root[0]}${vowels['a']}${root[1]}${root[2]}י',
-                'You': 'תְּ${root[0]}${vowels['a']}${root[1]}${root[2]}וּ',
-                'He': 'יְ${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'She': 'תְּ${root[0]}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'They': 'יְ${root[0]}${vowels['a']}${root[1]}${root[2]}וּ'
+                'I': 'אֲ${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'We': 'נְ${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'You M': 'תְּ${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'You F': 'תְּ${root[0]}${vowels['a']}${geminate(root[1], '')}${root[2]}י',
+                'You': 'תְּ${root[0]}${vowels['a']}${geminate(root[1], '')}${root[2]}וּ',
+                'He': 'יְ${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'She': 'תְּ${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'They': 'יְ${root[0]}${vowels['a']}${geminate(root[1], '')}${root[2]}וּ'
             };
         case 'Hiphil':
             return <String, String> {
@@ -373,14 +398,14 @@ Map<String, String> _conjugateFuture(List<String> root, String binyan) {
             };
         case 'Hitpael':
             return <String, String> {
-                'I': 'אֶ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'We': 'נִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'You M': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'You F': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}${vowels['i']}י',
-                'You': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}וּ',
-                'He': 'יִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'She': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${vowels['e']}${root[2]}',
-                'They': 'יִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${root[1]}${root[2]}וּ'
+                'I': 'אֶ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'We': 'נִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'You M': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'You F': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], '')}${root[2]}${vowels['i']}י',
+                'You': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], '')}${root[2]}וּ',
+                'He': 'יִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'She': 'תִּ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}',
+                'They': 'יִ${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], '')}${root[2]}וּ'
             };
         case 'Nifal':
             return <String, String> {
@@ -395,14 +420,14 @@ Map<String, String> _conjugateFuture(List<String> root, String binyan) {
             };
         case 'Pual':
             return <String, String> {
-                'I': 'אֲ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}',
-                'We': 'נְ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}',
-                'You F': 'תְּ${root[0]}${vowels['u']}${root[1]}${vowels['_e']}${root[2]}${vowels['i']}י',
-                'You M': 'תְּ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}',
-                'You': 'תְּ${root[0]}${vowels['u']}${root[1]}${vowels['_e']}${root[2]}וּ',
-                'He': 'יְ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}',
-                'She': 'תְּ${root[0]}${vowels['u']}${root[1]}${vowels['A']}${root[2]}',
-                'They': 'יְ${root[0]}${vowels['u']}${root[1]}${vowels['_e']}${root[2]}וּ'
+                'I': 'אֲ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}',
+                'We': 'נְ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}',
+                'You F': 'תְּ${root[0]}${vowels['u']}${geminate(root[1], vowels['_e']!)}${root[2]}${vowels['i']}י',
+                'You M': 'תְּ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}',
+                'You': 'תְּ${root[0]}${vowels['u']}${geminate(root[1], vowels['_e']!)}${root[2]}וּ',
+                'He': 'יְ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}',
+                'She': 'תְּ${root[0]}${vowels['u']}${geminate(root[1], vowels['A']!)}${root[2]}',
+                'They': 'יְ${root[0]}${vowels['u']}${geminate(root[1], vowels['_e']!)}${root[2]}וּ'
             };
         case 'Hufal':
             return <String, String> {

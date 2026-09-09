@@ -8,6 +8,15 @@ const Map<String, String> vowels = {
   'u': 'ֻ',
   'E': 'ֶ'};
 
+/// The dot written inside a letter. Doubles the consonant in the intensive
+/// binyanim (dagesh chazak); it also flips בגדכפת from v/kh/f to b/k/p
+/// (dagesh kal), which is not handled here.
+const String dagesh = 'ּ';
+
+/// Letters that cannot take a dagesh. When one lands where a doubling dagesh
+/// belongs, the dot is simply not written.
+const Set<String> rejectsDagesh = {'א', 'ה', 'ח', 'ע', 'ר'};
+
 const Map<String, String> letters = {
     "alef": "א",
     "bet": "ב",

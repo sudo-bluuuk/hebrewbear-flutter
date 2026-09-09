@@ -9,6 +9,15 @@ import 'fixtures/verbs.dart';
 /// A ratchet, not a wish list: when a rule lands, the entries it fixes must be
 /// deleted from here. The test fails if anything moves in either direction, so
 /// a fix cannot be forgotten and a regression cannot slip through.
+/// Pointed forms the vowel layer still gets wrong; same ratchet as above.
+const Set<String> knownVocalisedFailures = {
+  'ברך Piel Infinitive inf',
+  'כתב Paal Infinitive inf',
+  'כתב Hiphil Infinitive inf',
+  'לבש Hitpael Infinitive inf',
+  'תרגם Piel Infinitive inf',
+};
+
 const Set<String> knownFailures = {
   'אמר Paal',
   'נפל Paal',
@@ -90,30 +99,55 @@ void main() {
     );
   });
 
-  // The vowel layer fails independently of the consonants, so it is tracked
-  // apart: a missing dagesh should not be counted as a morphology bug, nor hide
-  // one. These pin the gaps found in research; delete them when the vowel work
-  // lands and they start failing.
-  group('vowel layer, known gaps', () {
-    const dagesh = 'ּ';
-    const sheva = 'ְ';
+  // The vowel layer fails independently of the consonants, so it gets its own
+  // ratchet: a mispointed form must not be counted as a morphology bug, nor
+  // hide one.
+  group('vowel layer', () {
+    String generatedFor(VocalisedCase c) {
+      final forms = switch (c.tense) {
+        'Infinitive' => createInfinitive(c.root, c.binyan),
+        'Present' => conjugatePresent(c.root, c.binyan),
+        'Past' => conjugatePast(c.root, c.binyan),
+        _ => conjugateFuture(c.root, c.binyan),
+      };
+      return forms[c.person]!;
+    }
 
-    test('gemination is never marked', () {
-      // Piel, Pual and Hitpael are defined by a doubled middle radical, written
-      // with dagesh. Nothing emits one.
-      for (final c in verbCases.where(
-          (c) => const ['Piel', 'Pual', 'Hitpael'].contains(c.binyan))) {
-        expect(createInfinitive(c.root, c.binyan).values.first,
-            isNot(contains(dagesh)),
-            reason: '${c.id} now marks gemination — good, update this test');
-      }
+    test('the set of failing pointed forms is exactly the known set', () {
+      final failing = {
+        for (final c in vocalisedCases)
+          if (generatedFor(c) != c.expected) c.id
+      };
+
+      final detail = vocalisedCases
+          .where((c) => generatedFor(c) != c.expected)
+          .map((c) => '    ${c.id}: got ${generatedFor(c)}, '
+              'want ${c.expected}${c.note.isEmpty ? '' : "  — ${c.note}"}')
+          .join('\n');
+
+      expect(
+        failing,
+        knownVocalisedFailures,
+        reason: 'pointed accuracy: '
+            '${vocalisedCases.length - failing.length}/${vocalisedCases.length}'
+            '\n$detail',
+      );
     });
 
-    test('the Piel infinitive opens with tsere instead of sheva', () {
-      // לְדַבֵּר takes a sheva under the lamed; the template uses tsere.
-      final piel = createInfinitive('דבר', 'Piel').values.first;
-      expect(piel.startsWith('ל$sheva'), isFalse,
-          reason: 'the Piel lamed is fixed — update this test');
+    test('the intensive binyanim now mark gemination', () {
+      // Piel, Pual and Hitpael are defined by a doubled middle radical. This
+      // was absent entirely before the vowel work.
+      expect(createInfinitive('דבר', 'Piel').values.first, contains(dagesh));
+      expect(createInfinitive('לבש', 'Hitpael').values.first, contains(dagesh));
+    });
+
+    test('a radical that cannot take a dagesh does not get one', () {
+      for (final radical in rejectsDagesh) {
+        final root = 'ד$radical' 'ר';
+        expect(createInfinitive(root, 'Piel').values.first,
+            isNot(contains(dagesh)),
+            reason: '$radical cannot be doubled');
+      }
     });
   });
 }

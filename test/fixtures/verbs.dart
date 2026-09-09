@@ -113,3 +113,53 @@ const List<VerbCase> verbCases = [
   VerbCase('דבר', 'Pual', 'מדובר', 'spelling', 'מְדֻבָּר is correct vocalised'),
   VerbCase('מלצ', 'Hufal', 'מומלץ', 'participle'),
 ];
+
+/// A sample of fully pointed forms, for measuring the vowel layer.
+///
+/// Separate from [verbCases] because the two layers fail independently: a form
+/// can have every consonant right and still be mispointed, and counting them
+/// together would hide both.
+class VocalisedCase {
+  const VocalisedCase(
+      this.root, this.binyan, this.tense, this.person, this.expected,
+      [this.note = '']);
+
+  final String root;
+  final String binyan;
+
+  /// 'Infinitive', 'Present', 'Past' or 'Future'.
+  final String tense;
+
+  /// The key within that tense; 'inf' for the infinitive.
+  final String person;
+
+  /// The correct form, fully pointed.
+  final String expected;
+  final String note;
+
+  String get id => '$root $binyan $tense $person';
+}
+
+const List<VocalisedCase> vocalisedCases = [
+  // Gemination in the intensive binyanim.
+  VocalisedCase('דבר', 'Piel', 'Infinitive', 'inf', 'לְדַבֵּר'),
+  VocalisedCase('דבר', 'Piel', 'Present', 'S M', 'מְדַבֵּר'),
+  VocalisedCase('דבר', 'Piel', 'Future', 'He', 'יְדַבֵּר'),
+
+  // ח cannot take a dagesh and is written undoubled, vowel unchanged.
+  VocalisedCase('נחם', 'Piel', 'Infinitive', 'inf', 'לְנַחֵם'),
+
+  // ר cannot either, and additionally lengthens the vowel before it.
+  VocalisedCase('ברך', 'Piel', 'Infinitive', 'inf', 'לְבָרֵךְ',
+      'needs compensatory lengthening'),
+
+  // Sheva closing a syllable.
+  VocalisedCase('כתב', 'Paal', 'Infinitive', 'inf', 'לִכְתּוֹב',
+      'needs dagesh kal after the silent sheva'),
+  VocalisedCase('כתב', 'Hiphil', 'Infinitive', 'inf', 'לְהַכְתִּיב',
+      'needs dagesh kal'),
+  VocalisedCase('לבש', 'Hitpael', 'Infinitive', 'inf', 'לְהִתְלַבֵּשׁ',
+      'needs the shin dot'),
+  VocalisedCase('תרגם', 'Piel', 'Infinitive', 'inf', 'לְתַרְגֵּם',
+      'needs dagesh kal, not gemination'),
+];
