@@ -94,8 +94,70 @@ String finalizeWord(String word) {
   for (var i = word.length - 1; i >= 0; i--) {
     final character = word[i];
     final finalForm = _finalForms[character];
-    if (finalForm != null) return word.replaceRange(i, i + 1, finalForm);
+    if (finalForm != null) {
+      final rewritten = word.replaceRange(i, i + 1, finalForm);
+      // A word-final kaf carries a sheva, alone among the final forms:
+      // מֶלֶךְ and לְבָרֵךְ, but שָׁלוֹם and בֵּן.
+      if (finalForm == 'ך' && !rewritten.substring(i).contains(vowels['_e']!)) {
+        return '$rewritten${vowels['_e']}';
+      }
+      return rewritten;
+    }
     if (isHebrewLetter(character)) return word;
   }
   return word;
+}
+
+/// Letters that take a dagesh kal, which changes them from v/gh/dh/kh/f/th to
+/// b/g/d/k/p/t. Written in base form; a word-final letter is past the point
+/// where the rule applies.
+const Set<String> _takesDageshKal = {'ב', 'ג', 'ד', 'כ', 'פ', 'ת'};
+
+/// Vowels short enough that a sheva after them closes the syllable.
+///
+/// Deliberately excludes qamats and tsere: a qamats may be long or short and
+/// nothing in the text says which, so the ambiguous cases are left alone rather
+/// than guessed at.
+final Set<String> _shortVowels = {
+  vowels['i']!,
+  vowels['a']!,
+  vowels['E']!,
+  vowels['u']!,
+};
+
+/// Splits a pointed word into letters, each carrying its own marks.
+List<String> _letterUnits(String word) {
+  final units = <String>[];
+  for (final character in word.split('')) {
+    if (isHebrewLetter(character) || units.isEmpty) {
+      units.add(character);
+    } else {
+      units[units.length - 1] += character;
+    }
+  }
+  return units;
+}
+
+/// Adds the dagesh kal that בגדכפת take at the start of a word and after a
+/// silent sheva: לִכְתּוֹב, but כּוֹתְבִים keeps its ב bare because the sheva there
+/// follows a long vowel and so is mobile.
+///
+/// A sheva is treated as silent only when the letter before it carries an
+/// unambiguously short vowel. Anything less certain is left alone, so the pass
+/// under-applies rather than putting a dot where none belongs.
+String addDageshKal(String word) {
+  final units = _letterUnits(word);
+
+  for (var i = 0; i < units.length; i++) {
+    if (!_takesDageshKal.contains(units[i][0])) continue;
+    if (units[i].contains(dagesh)) continue;
+
+    final afterSilentSheva = i >= 2 &&
+        units[i - 1].contains(vowels['_e']!) &&
+        _shortVowels.any(units[i - 2].contains);
+
+    if (i == 0 || afterSilentSheva) units[i] = '${units[i]}$dagesh';
+  }
+
+  return units.join();
 }

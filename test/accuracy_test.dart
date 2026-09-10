@@ -15,11 +15,7 @@ const Set<String> knownFailures = {
 
 /// Pointed forms the vowel layer still gets wrong; same ratchet as above.
 const Set<String> knownVocalisedFailures = {
-  'ברך Piel Infinitive inf',
-  'כתב Paal Infinitive inf',
-  'כתב Hiphil Infinitive inf',
   'לבש Hitpael Infinitive inf',
-  'תרגם Piel Infinitive inf',
 };
 
 

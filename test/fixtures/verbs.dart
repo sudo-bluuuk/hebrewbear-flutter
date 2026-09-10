@@ -179,8 +179,12 @@ const List<VocalisedCase> vocalisedCases = [
       'needs dagesh kal after the silent sheva'),
   VocalisedCase('כתב', 'Hiphil', 'Infinitive', 'inf', 'לְהַכְתִּיב',
       'needs dagesh kal'),
+  // The shin dot is not a rule the engine can apply: שׁ and שׂ are different
+  // consonants, and an unpointed root does not say which it is. Recovering it
+  // means carrying the dot through storage and the slot model, so it is left
+  // as a data problem rather than guessed at.
   VocalisedCase('לבש', 'Hitpael', 'Infinitive', 'inf', 'לְהִתְלַבֵּשׁ',
-      'needs the shin dot'),
+      'the root does not carry the shin/sin distinction'),
   VocalisedCase('תרגם', 'Piel', 'Infinitive', 'inf', 'לְתַרְגֵּם',
       'needs dagesh kal, not gemination'),
 
