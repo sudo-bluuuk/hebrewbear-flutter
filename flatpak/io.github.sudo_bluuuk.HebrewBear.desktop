@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Hebrew Bear
+Comment=Hebrew vocabulary with root-based verb conjugation
+Exec=hebrewbear
+Icon=io.github.sudo_bluuuk.HebrewBear
+Terminal=false
+Categories=Education;Languages;
+Keywords=Hebrew;vocabulary;verb;conjugation;binyan;root;

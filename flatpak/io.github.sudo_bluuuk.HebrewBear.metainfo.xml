@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.sudo_bluuuk.HebrewBear</id>
+
+  <name>Hebrew Bear</name>
+  <summary>Hebrew vocabulary with root-based verb conjugation</summary>
+
+  <metadata_license>CC0-1.0</metadata_license>
+  <!-- No LICENSE file in the repository, so all rights are reserved by
+       default. Change this if the project is ever published under a licence. -->
+  <project_license>LicenseRef-proprietary</project_license>
+
+  <developer id="io.github.sudo_bluuuk">
+    <name>Bluuuk</name>
+  </developer>
+
+  <description>
+    <p>
+      A personal Hebrew vocabulary book. Verbs are stored as a root plus a
+      binyan and their forms are generated on demand; nouns and adjectives are
+      stored as written.
+    </p>
+    <p>
+      The conjugation rules cover the regular patterns along with several weak
+      root classes, four-letter roots and the Hitpael metathesis. Where a verb
+      is genuinely irregular, any single form can be corrected by hand and the
+      correction is kept.
+    </p>
+  </description>
+
+  <url type="homepage">https://github.com/sudo-bluuuk/hebrewbear-flutter</url>
+  <url type="bugtracker">https://github.com/sudo-bluuuk/hebrewbear-flutter/issues</url>
+
+  <launchable type="desktop-id">io.github.sudo_bluuuk.HebrewBear.desktop</launchable>
+
+  <content_rating type="oars-1.1"/>
+
+  <releases>
+    <release version="1.0.0" date="2026-09-10">
+      <description>
+        <p>First packaged release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

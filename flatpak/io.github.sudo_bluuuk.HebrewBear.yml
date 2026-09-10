@@ -1,0 +1,49 @@
+# Packages the release bundle Flutter has already built on the host.
+#
+# Building Flutter inside the sandbox would also work but costs a multi-gigabyte
+# SDK download for no gain here: the bundle needs nothing newer than GLIBC_2.34,
+# which every current runtime provides, so the host-built binaries run as they
+# are. Check with:
+#   objdump -T build/linux/x64/release/bundle/hebrewbear | grep -o 'GLIBC_[0-9.]*' | sort -uV | tail -1
+app-id: io.github.sudo_bluuuk.HebrewBear
+runtime: org.gnome.Platform
+runtime-version: '49'
+sdk: org.gnome.Sdk
+command: hebrewbear
+
+finish-args:
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --share=ipc
+  - --device=dri
+  # The word database lives at ~/Documents/words.sqlite3, which is outside the
+  # sandbox. Without this the app starts with an empty list every time.
+  - --filesystem=xdg-documents
+
+modules:
+  - name: hebrewbear
+    buildsystem: simple
+    build-commands:
+      # Kept together in one directory: the executable finds its libraries
+      # through RUNPATH $ORIGIN/lib and its assets through /proc/self/exe, both
+      # of which resolve the symlink to the real location.
+      - install -d /app/share/hebrewbear
+      - cp -r bundle/. /app/share/hebrewbear/
+      - install -d /app/bin
+      - ln -s /app/share/hebrewbear/hebrewbear /app/bin/hebrewbear
+      - install -Dm644 io.github.sudo_bluuuk.HebrewBear.desktop
+        /app/share/applications/io.github.sudo_bluuuk.HebrewBear.desktop
+      - install -Dm644 io.github.sudo_bluuuk.HebrewBear.metainfo.xml
+        /app/share/metainfo/io.github.sudo_bluuuk.HebrewBear.metainfo.xml
+      - install -Dm644 icon.png
+        /app/share/icons/hicolor/512x512/apps/io.github.sudo_bluuuk.HebrewBear.png
+    sources:
+      - type: dir
+        path: ../build/linux/x64/release/bundle
+        dest: bundle
+      - type: file
+        path: io.github.sudo_bluuuk.HebrewBear.desktop
+      - type: file
+        path: io.github.sudo_bluuuk.HebrewBear.metainfo.xml
+      - type: file
+        path: ../assets/icon/icon.png
