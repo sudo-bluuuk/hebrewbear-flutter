@@ -10,17 +10,7 @@ import 'fixtures/verbs.dart';
 /// deleted from here. The test fails if anything moves in either direction, so
 /// a fix cannot be forgotten and a regression cannot slip through.
 const Set<String> knownFailures = {
-  'אמר Paal',
-  'נפל Paal',
-  'נתן Paal',
-  'ראה Nifal',
-  'סבב Paal',
-  'הלך Paal',
-  'בין Hiphil',
-  'נגע Hiphil',
-  'כנס Nifal',
-  'שבר Nifal',
-  'דבר Pual',
+
 };
 
 /// Pointed forms the vowel layer still gets wrong; same ratchet as above.
