@@ -67,6 +67,13 @@ const List<VerbCase> verbCases = [
   VerbCase('ראה', 'Paal', 'לראות', 'lamed-he'),
   VerbCase('שתה', 'Paal', 'לשתות', 'lamed-he'),
 
+  // Lamed-he outside Paal. Not handled yet, but measured so the gap is visible
+  // rather than merely absent from the fixtures.
+  VerbCase('כסה', 'Piel', 'לכסות', 'lamed-he', 'other binyanim'),
+  VerbCase('עלה', 'Hiphil', 'להעלות', 'lamed-he', 'other binyanim'),
+  VerbCase('ראה', 'Nifal', 'להיראות', 'lamed-he', 'other binyanim'),
+  VerbCase('כסה', 'Hitpael', 'להתכסות', 'lamed-he', 'other binyanim'),
+
   // Third radical alef or a guttural.
   VerbCase('מצא', 'Paal', 'למצוא', 'lamed-alef'),
   VerbCase('קרא', 'Paal', 'לקרוא', 'lamed-alef'),
@@ -162,4 +169,10 @@ const List<VocalisedCase> vocalisedCases = [
       'needs the shin dot'),
   VocalisedCase('תרגם', 'Piel', 'Infinitive', 'inf', 'לְתַרְגֵּם',
       'needs dagesh kal, not gemination'),
+
+  // Lamed-he in Paal, exact down to the vowels.
+  VocalisedCase('קנה', 'Paal', 'Infinitive', 'inf', 'לִקְנוֹת'),
+  VocalisedCase('קנה', 'Paal', 'Present', 'S M', 'קוֹנֶה'),
+  VocalisedCase('קנה', 'Paal', 'Past', 'She', 'קָנְתָה'),
+  VocalisedCase('קנה', 'Paal', 'Future', 'He', 'יִקְנֶה'),
 ];

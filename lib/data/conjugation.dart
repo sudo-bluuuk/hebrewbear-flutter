@@ -112,6 +112,14 @@ final Map<String, String> _prefixBefore = {
 /// is Unicode canonical order. Appending the dagesh straight after the letter
 /// renders the same but does not compare equal to Hebrew text from anywhere
 /// else, which would make every vocalised expectation untypable.
+/// True for roots whose third radical is ה, which does not survive into most
+/// forms: קנה gives לִקְנוֹת, not לִקְנוֹה.
+///
+/// Unlike pe-yod or pe-nun, this class is fully predictable from the letters —
+/// every root ending in ה behaves this way — so it needs nothing stored
+/// alongside the word.
+bool isLamedHe(List<String> root) => root[2] == letters['he'];
+
 String geminate(String middleSlot, String vowel) {
   if (middleSlot.length != 1 || rejectsDagesh.contains(middleSlot)) {
     return '$middleSlot$vowel';
@@ -123,7 +131,11 @@ Map<String, String> _createInfinitive(List<String> root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
-            if(root[0] == letters['alef']) // leehov
+            if(isLamedHe(root))
+                return <String, String> {
+                    'inf': "ל${vowels['i']}${root[0]}${vowels['_e']}${root[1]}וֹת"
+                };
+            else if(root[0] == letters['alef']) // leehov
                 return <String, String> {
                     'inf': "ל${vowels['E']}${root[0]}${vowels['E']}${root[1]}וֹ${root[2]}"
                 };
@@ -170,7 +182,14 @@ Map<String, String> _conjugatePresent(List<String> root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
-            if(root[1] == letters['yod'] || root[1] == letters['vav'])
+            if(isLamedHe(root))
+                return <String, String> {
+                    'S M': '${root[0]}וֹ${root[1]}${vowels['E']}ה',
+                    'S F': '${root[0]}וֹ${root[1]}${vowels['A']}ה',
+                    'P M': '${root[0]}וֹ${root[1]}${vowels['i']}ים',
+                    'P F': '${root[0]}וֹ${root[1]}וֹת'
+                };
+            else if(root[1] == letters['yod'] || root[1] == letters['vav'])
                 return <String, String> {
                     'S M': "${root[0]}${vowels['A']}${root[2]}",
                     'S F': '${root[0]}${vowels['A']}${root[2]}${vowels['A']}ה',
@@ -235,7 +254,19 @@ Map<String, String> _conjugatePast(List<String> root, String binyan) {
     
     switch (binyan) {
         case 'Paal':
-            if(root[1] == letters['yod'] || root[1] == letters['vav'])
+            if(isLamedHe(root))
+                return <String, String> {
+                    'I': '${root[0]}${vowels['A']}${root[1]}${vowels['i']}ית${vowels['i']}י',
+                    'You F': '${root[0]}${vowels['A']}${root[1]}${vowels['i']}ית',
+                    'You M': '${root[0]}${vowels['A']}${root[1]}${vowels['i']}ית${vowels['A']}',
+                    'He': '${root[0]}${vowels['A']}${root[1]}${vowels['A']}ה',
+                    'She': '${root[0]}${vowels['A']}${root[1]}${vowels['_e']}ת${vowels['A']}ה',
+                    'We': '${root[0]}${vowels['A']}${root[1]}${vowels['i']}ינוּ',
+                    'You M P': '${root[0]}${vowels['_e']}${root[1]}${vowels['i']}ית${vowels['E']}ם',
+                    'You F P': '${root[0]}${vowels['_e']}${root[1]}${vowels['i']}ית${vowels['E']}ן',
+                    'They': '${root[0]}${vowels['A']}${root[1]}וּ'
+                };
+            else if(root[1] == letters['yod'] || root[1] == letters['vav'])
                 return <String, String> {
                     'I': '${root[0]}${vowels['A']}${root[2]}${vowels['_e']}ת${vowels['i']}י',
                     'You F': '${root[0]}${vowels['A']}${root[2]}${vowels['_e']}ת',
@@ -341,7 +372,18 @@ Map<String, String> _conjugateFuture(List<String> root, String binyan) {
 
     switch(binyan) {
         case 'Paal':
-            if(root[1] == letters['vav'])
+            if(isLamedHe(root))
+                return <String, String> {
+                    'I': 'אֶ${root[0]}${vowels['_e']}${root[1]}${vowels['E']}ה',
+                    'We': 'נִ${root[0]}${vowels['_e']}${root[1]}${vowels['E']}ה',
+                    'You M': 'תִּ${root[0]}${vowels['_e']}${root[1]}${vowels['E']}ה',
+                    'You F': 'תִּ${root[0]}${vowels['_e']}${root[1]}${vowels['i']}י',
+                    'You': 'תִּ${root[0]}${vowels['_e']}${root[1]}וּ',
+                    'He': 'יִ${root[0]}${vowels['_e']}${root[1]}${vowels['E']}ה',
+                    'She': 'תִּ${root[0]}${vowels['_e']}${root[1]}${vowels['E']}ה',
+                    'They': 'יִ${root[0]}${vowels['_e']}${root[1]}וּ'
+                };
+            else if(root[1] == letters['vav'])
                 return <String, String> {
                     'I': 'אָ${root[0]}וּ${root[2]}',
                     'We': 'נָ${root[0]}וּ${root[2]}',
