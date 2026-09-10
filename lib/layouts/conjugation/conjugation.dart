@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:hebrewbear/data/conjugation.dart';
 import 'package:hebrewbear/data/corrections.dart';
 import 'package:hebrewbear/data/dbmanager.dart';
+import 'package:hebrewbear/data/gizrah.dart';
 import 'package:hebrewbear/layouts/conjugation/editform.dart';
 import 'package:hebrewbear/widgets/cell.dart';
 import 'package:hebrewbear/widgets/stripe.dart';
@@ -43,10 +44,12 @@ class _ConjugationState extends State<Conjugation> {
 
   static const TextStyle _textStyle = TextStyle(fontSize: 26);
 
+  Gizrah get _gizrah => gizrahFromName(word.gizrah);
+
   Map<String, String> get _generated => switch (time) {
-        'Past' => conjugatePast(word.root, word.type),
-        'Future' => conjugateFuture(word.root, word.type),
-        _ => conjugatePresent(word.root, word.type),
+        'Past' => conjugatePast(word.root, word.type, gizrah: _gizrah),
+        'Future' => conjugateFuture(word.root, word.type, gizrah: _gizrah),
+        _ => conjugatePresent(word.root, word.type, gizrah: _gizrah),
       };
 
   Future<void> _edit(
@@ -88,7 +91,7 @@ class _ConjugationState extends State<Conjugation> {
 
         final generated = _generated;
         final generatedInfinitive =
-            createInfinitive(word.root, word.type).values.first;
+            createInfinitive(word.root, word.type, gizrah: _gizrah).values.first;
         final infinitive = corrections.resolve(WordsDB.infinitiveTense,
             WordsDB.infinitiveKey, generatedInfinitive);
 

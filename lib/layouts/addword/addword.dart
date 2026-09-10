@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:hebrewbear/data/alphabet.dart';
 import 'package:hebrewbear/data/conjugation.dart';
 import 'package:hebrewbear/data/dbmanager.dart';
+import 'package:hebrewbear/data/gizrah.dart';
 import 'package:hebrewbear/data/wordtypes.dart';
 import 'package:hebrewbear/widgets/dropdown.dart';
+import 'package:hebrewbear/widgets/gizrahpicker.dart';
 import 'package:provider/provider.dart';
 
 class AddWord extends StatefulWidget {
@@ -24,6 +26,22 @@ class _AddWordState extends State<AddWord> {
   final _translateController = TextEditingController();
 
   late String _type = widget.category.types.first;
+  Gizrah _gizrah = Gizrah.automatic;
+
+  /// Only asked for when the letters leave the class open.
+  bool _asksGizrah = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _rootController.addListener(_refreshGizrahPrompt);
+  }
+
+  void _refreshGizrahPrompt() {
+    final asks = needsGizrah(_rootController.text, _type);
+    if (asks == _asksGizrah) return;
+    setState(() => _asksGizrah = asks);
+  }
 
   String get _rootHint => switch (widget.category) {
         WordCategory.verb => 'Enter the three-letter root',
@@ -63,6 +81,7 @@ class _AddWordState extends State<AddWord> {
           root: d.Value(root),
           translate: d.Value(_translateController.text.trim()),
           type: d.Value(_type),
+          gizrah: d.Value(_asksGizrah ? _gizrah.name : Gizrah.automatic.name),
         ));
 
     if (!mounted) return;
@@ -115,6 +134,14 @@ class _AddWordState extends State<AddWord> {
                       listItems: widget.category.types,
                       defaultItem: _type,
                       onChanged: (newValue) => setState(() => _type = newValue),
+                    ),
+                  ),
+                if (_asksGizrah)
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 10.0),
+                    child: GizrahPicker(
+                      value: _gizrah,
+                      onChanged: (picked) => setState(() => _gizrah = picked),
                     ),
                   ),
                 Row(

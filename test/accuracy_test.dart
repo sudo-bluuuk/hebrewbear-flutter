@@ -9,27 +9,11 @@ import 'fixtures/verbs.dart';
 /// A ratchet, not a wish list: when a rule lands, the entries it fixes must be
 /// deleted from here. The test fails if anything moves in either direction, so
 /// a fix cannot be forgotten and a regression cannot slip through.
-/// Pointed forms the vowel layer still gets wrong; same ratchet as above.
-const Set<String> knownVocalisedFailures = {
-  'ברך Piel Infinitive inf',
-  'כתב Paal Infinitive inf',
-  'כתב Hiphil Infinitive inf',
-  'לבש Hitpael Infinitive inf',
-  'תרגם Piel Infinitive inf',
-};
-
 const Set<String> knownFailures = {
   'אמר Paal',
   'נפל Paal',
   'נתן Paal',
-  'ישב Paal',
-  'ידע Paal',
-  'ירד Paal',
-  'יצא Paal',
-  'כסה Piel',
-  'עלה Hiphil',
   'ראה Nifal',
-  'כסה Hitpael',
   'סבב Paal',
   'הלך Paal',
   'בין Hiphil',
@@ -39,12 +23,23 @@ const Set<String> knownFailures = {
   'דבר Pual',
 };
 
+/// Pointed forms the vowel layer still gets wrong; same ratchet as above.
+const Set<String> knownVocalisedFailures = {
+  'ברך Piel Infinitive inf',
+  'כתב Paal Infinitive inf',
+  'כתב Hiphil Infinitive inf',
+  'לבש Hitpael Infinitive inf',
+  'תרגם Piel Infinitive inf',
+};
+
+
+
 void main() {
   String consonantsOf(String form) =>
       form.split('').where(isHebrewLetter).join();
 
   String generatedFor(VerbCase c) =>
-      consonantsOf(createInfinitive(c.root, c.binyan).values.first);
+      consonantsOf(createInfinitive(c.root, c.binyan, gizrah: c.storedClass).values.first);
 
   bool passes(VerbCase c) => generatedFor(c) == c.infinitive;
 

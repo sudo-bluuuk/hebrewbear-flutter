@@ -11,9 +11,11 @@
 /// buckets rather than one undifferentiated count.
 library;
 
+import 'package:hebrewbear/data/gizrah.dart';
+
 class VerbCase {
   const VerbCase(this.root, this.binyan, this.infinitive, this.gizrah,
-      [this.note = '']);
+      [this.note = '', this.storedClass = Gizrah.automatic]);
 
   final String root;
   final String binyan;
@@ -24,6 +26,16 @@ class VerbCase {
   /// Which class this verb belongs to; failures are reported grouped by it.
   final String gizrah;
   final String note;
+
+  /// What the user would have picked for this root, for the classes the
+  /// letters do not settle. Left automatic everywhere else.
+  final Gizrah storedClass;
+
+  /// A root whose first letter drops — the user would have said so when
+  /// adding it.
+  const VerbCase.dropping(this.root, this.binyan, this.infinitive, this.gizrah,
+      [this.note = ''])
+      : storedClass = Gizrah.droppingFirst;
 
   String get id => '$root $binyan';
 
@@ -54,10 +66,10 @@ const List<VerbCase> verbCases = [
   VerbCase('נתן', 'Paal', 'לתת', 'irregular'),
 
   // First radical yod — note ישן behaves unlike the rest.
-  VerbCase('ישב', 'Paal', 'לשבת', 'pe-yod'),
-  VerbCase('ידע', 'Paal', 'לדעת', 'pe-yod'),
-  VerbCase('ירד', 'Paal', 'לרדת', 'pe-yod'),
-  VerbCase('יצא', 'Paal', 'לצאת', 'pe-yod'),
+  VerbCase.dropping('ישב', 'Paal', 'לשבת', 'pe-yod'),
+  VerbCase.dropping('ידע', 'Paal', 'לדעת', 'pe-yod'),
+  VerbCase.dropping('ירד', 'Paal', 'לרדת', 'pe-yod'),
+  VerbCase.dropping('יצא', 'Paal', 'לצאת', 'pe-yod'),
   VerbCase('ישן', 'Paal', 'לישון', 'pe-yod', 'keeps the yod, unlike ישב'),
 
   // Third radical he — very common.
@@ -71,7 +83,9 @@ const List<VerbCase> verbCases = [
   // rather than merely absent from the fixtures.
   VerbCase('כסה', 'Piel', 'לכסות', 'lamed-he', 'other binyanim'),
   VerbCase('עלה', 'Hiphil', 'להעלות', 'lamed-he', 'other binyanim'),
-  VerbCase('ראה', 'Nifal', 'להיראות', 'lamed-he', 'other binyanim'),
+  // The ות ending is right now; what is left is the same missing ktiv male yod
+  // as the other Nifal infinitives, so it belongs in the spelling bucket.
+  VerbCase('ראה', 'Nifal', 'להיראות', 'spelling', 'lamed-he ending is correct'),
   VerbCase('כסה', 'Hitpael', 'להתכסות', 'lamed-he', 'other binyanim'),
 
   // Third radical alef or a guttural.

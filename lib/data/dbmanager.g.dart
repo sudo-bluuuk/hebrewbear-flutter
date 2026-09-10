@@ -51,8 +51,18 @@ class $WordsSchemaTable extends WordsSchema
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _gizrahMeta = const VerificationMeta('gizrah');
   @override
-  List<GeneratedColumn> get $columns => [id, root, translate, type];
+  late final GeneratedColumn<String> gizrah = GeneratedColumn<String>(
+    'gizrah',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('automatic'),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, root, translate, type, gizrah];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -92,6 +102,12 @@ class $WordsSchemaTable extends WordsSchema
     } else if (isInserting) {
       context.missing(_typeMeta);
     }
+    if (data.containsKey('gizrah')) {
+      context.handle(
+        _gizrahMeta,
+        gizrah.isAcceptableOrUnknown(data['gizrah']!, _gizrahMeta),
+      );
+    }
     return context;
   }
 
@@ -117,6 +133,10 @@ class $WordsSchemaTable extends WordsSchema
         DriftSqlType.string,
         data['${effectivePrefix}type'],
       )!,
+      gizrah: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}gizrah'],
+      )!,
     );
   }
 
@@ -131,11 +151,17 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
   final String root;
   final String translate;
   final String type;
+
+  /// How the root conjugates, where the letters do not settle it. Defaults to
+  /// automatic, which is what every row written before this column existed
+  /// meant implicitly.
+  final String gizrah;
   const WordsSchemaData({
     required this.id,
     required this.root,
     required this.translate,
     required this.type,
+    required this.gizrah,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -144,6 +170,7 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
     map['root'] = Variable<String>(root);
     map['translate'] = Variable<String>(translate);
     map['type'] = Variable<String>(type);
+    map['gizrah'] = Variable<String>(gizrah);
     return map;
   }
 
@@ -153,6 +180,7 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
       root: Value(root),
       translate: Value(translate),
       type: Value(type),
+      gizrah: Value(gizrah),
     );
   }
 
@@ -166,6 +194,7 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
       root: serializer.fromJson<String>(json['root']),
       translate: serializer.fromJson<String>(json['translate']),
       type: serializer.fromJson<String>(json['type']),
+      gizrah: serializer.fromJson<String>(json['gizrah']),
     );
   }
   @override
@@ -176,6 +205,7 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
       'root': serializer.toJson<String>(root),
       'translate': serializer.toJson<String>(translate),
       'type': serializer.toJson<String>(type),
+      'gizrah': serializer.toJson<String>(gizrah),
     };
   }
 
@@ -184,11 +214,13 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
     String? root,
     String? translate,
     String? type,
+    String? gizrah,
   }) => WordsSchemaData(
     id: id ?? this.id,
     root: root ?? this.root,
     translate: translate ?? this.translate,
     type: type ?? this.type,
+    gizrah: gizrah ?? this.gizrah,
   );
   WordsSchemaData copyWithCompanion(WordsSchemaCompanion data) {
     return WordsSchemaData(
@@ -196,6 +228,7 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
       root: data.root.present ? data.root.value : this.root,
       translate: data.translate.present ? data.translate.value : this.translate,
       type: data.type.present ? data.type.value : this.type,
+      gizrah: data.gizrah.present ? data.gizrah.value : this.gizrah,
     );
   }
 
@@ -205,13 +238,14 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
           ..write('id: $id, ')
           ..write('root: $root, ')
           ..write('translate: $translate, ')
-          ..write('type: $type')
+          ..write('type: $type, ')
+          ..write('gizrah: $gizrah')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, root, translate, type);
+  int get hashCode => Object.hash(id, root, translate, type, gizrah);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -219,7 +253,8 @@ class WordsSchemaData extends DataClass implements Insertable<WordsSchemaData> {
           other.id == this.id &&
           other.root == this.root &&
           other.translate == this.translate &&
-          other.type == this.type);
+          other.type == this.type &&
+          other.gizrah == this.gizrah);
 }
 
 class WordsSchemaCompanion extends UpdateCompanion<WordsSchemaData> {
@@ -227,17 +262,20 @@ class WordsSchemaCompanion extends UpdateCompanion<WordsSchemaData> {
   final Value<String> root;
   final Value<String> translate;
   final Value<String> type;
+  final Value<String> gizrah;
   const WordsSchemaCompanion({
     this.id = const Value.absent(),
     this.root = const Value.absent(),
     this.translate = const Value.absent(),
     this.type = const Value.absent(),
+    this.gizrah = const Value.absent(),
   });
   WordsSchemaCompanion.insert({
     this.id = const Value.absent(),
     required String root,
     required String translate,
     required String type,
+    this.gizrah = const Value.absent(),
   }) : root = Value(root),
        translate = Value(translate),
        type = Value(type);
@@ -246,12 +284,14 @@ class WordsSchemaCompanion extends UpdateCompanion<WordsSchemaData> {
     Expression<String>? root,
     Expression<String>? translate,
     Expression<String>? type,
+    Expression<String>? gizrah,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (root != null) 'root': root,
       if (translate != null) 'translate': translate,
       if (type != null) 'type': type,
+      if (gizrah != null) 'gizrah': gizrah,
     });
   }
 
@@ -260,12 +300,14 @@ class WordsSchemaCompanion extends UpdateCompanion<WordsSchemaData> {
     Value<String>? root,
     Value<String>? translate,
     Value<String>? type,
+    Value<String>? gizrah,
   }) {
     return WordsSchemaCompanion(
       id: id ?? this.id,
       root: root ?? this.root,
       translate: translate ?? this.translate,
       type: type ?? this.type,
+      gizrah: gizrah ?? this.gizrah,
     );
   }
 
@@ -284,6 +326,9 @@ class WordsSchemaCompanion extends UpdateCompanion<WordsSchemaData> {
     if (type.present) {
       map['type'] = Variable<String>(type.value);
     }
+    if (gizrah.present) {
+      map['gizrah'] = Variable<String>(gizrah.value);
+    }
     return map;
   }
 
@@ -293,7 +338,8 @@ class WordsSchemaCompanion extends UpdateCompanion<WordsSchemaData> {
           ..write('id: $id, ')
           ..write('root: $root, ')
           ..write('translate: $translate, ')
-          ..write('type: $type')
+          ..write('type: $type, ')
+          ..write('gizrah: $gizrah')
           ..write(')'))
         .toString();
   }
@@ -682,6 +728,7 @@ typedef $$WordsSchemaTableCreateCompanionBuilder =
       required String root,
       required String translate,
       required String type,
+      Value<String> gizrah,
     });
 typedef $$WordsSchemaTableUpdateCompanionBuilder =
     WordsSchemaCompanion Function({
@@ -689,6 +736,7 @@ typedef $$WordsSchemaTableUpdateCompanionBuilder =
       Value<String> root,
       Value<String> translate,
       Value<String> type,
+      Value<String> gizrah,
     });
 
 final class $$WordsSchemaTableReferences
@@ -749,6 +797,11 @@ class $$WordsSchemaTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<String> get gizrah => $composableBuilder(
+    column: $table.gizrah,
+    builder: (column) => ColumnFilters(column),
+  );
+
   Expression<bool> conjugationOverridesRefs(
     Expression<bool> Function($$ConjugationOverridesTableFilterComposer f) f,
   ) {
@@ -803,6 +856,11 @@ class $$WordsSchemaTableOrderingComposer
     column: $table.type,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get gizrah => $composableBuilder(
+    column: $table.gizrah,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$WordsSchemaTableAnnotationComposer
@@ -825,6 +883,9 @@ class $$WordsSchemaTableAnnotationComposer
 
   GeneratedColumn<String> get type =>
       $composableBuilder(column: $table.type, builder: (column) => column);
+
+  GeneratedColumn<String> get gizrah =>
+      $composableBuilder(column: $table.gizrah, builder: (column) => column);
 
   Expression<T> conjugationOverridesRefs<T extends Object>(
     Expression<T> Function($$ConjugationOverridesTableAnnotationComposer a) f,
@@ -885,11 +946,13 @@ class $$WordsSchemaTableTableManager
                 Value<String> root = const Value.absent(),
                 Value<String> translate = const Value.absent(),
                 Value<String> type = const Value.absent(),
+                Value<String> gizrah = const Value.absent(),
               }) => WordsSchemaCompanion(
                 id: id,
                 root: root,
                 translate: translate,
                 type: type,
+                gizrah: gizrah,
               ),
           createCompanionCallback:
               ({
@@ -897,11 +960,13 @@ class $$WordsSchemaTableTableManager
                 required String root,
                 required String translate,
                 required String type,
+                Value<String> gizrah = const Value.absent(),
               }) => WordsSchemaCompanion.insert(
                 id: id,
                 root: root,
                 translate: translate,
                 type: type,
+                gizrah: gizrah,
               ),
           withReferenceMapper: (p0) => p0
               .map(

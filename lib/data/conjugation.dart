@@ -1,6 +1,7 @@
 // ignore_for_file: curly_braces_in_flow_control_structures
 
 import 'alphabet.dart';
+import 'gizrah.dart';
 
 /// Every template below is written against three slots. Roots that do not fit
 /// them fall back to the bare root rather than throwing.
@@ -41,24 +42,40 @@ List<String> rootSlots(String root) {
 Map<String, String> _finalize(Map<String, String> forms) =>
     forms.map((person, form) => MapEntry(person, finalizeWord(form)));
 
-Map<String, String> createInfinitive(String root, String binyan) {
+Map<String, String> createInfinitive(
+  String root,
+  String binyan, {
+  Gizrah gizrah = Gizrah.automatic,
+}) {
   if (!isSupportedRoot(root, binyan)) return {'inf': root};
-  return _finalize(_createInfinitive(rootSlots(root), binyan));
+  return _finalize(_createInfinitive(rootSlots(root), binyan, gizrah));
 }
 
-Map<String, String> conjugatePresent(String root, String binyan) {
+Map<String, String> conjugatePresent(
+  String root,
+  String binyan, {
+  Gizrah gizrah = Gizrah.automatic,
+}) {
   if (!isSupportedRoot(root, binyan)) return {'root': root};
-  return _finalize(_conjugatePresent(rootSlots(root), binyan));
+  return _finalize(_conjugatePresent(rootSlots(root), binyan, gizrah));
 }
 
-Map<String, String> conjugatePast(String root, String binyan) {
+Map<String, String> conjugatePast(
+  String root,
+  String binyan, {
+  Gizrah gizrah = Gizrah.automatic,
+}) {
   if (!isSupportedRoot(root, binyan)) return {'root': root};
-  return _finalize(_conjugatePast(rootSlots(root), binyan));
+  return _finalize(_conjugatePast(rootSlots(root), binyan, gizrah));
 }
 
-Map<String, String> conjugateFuture(String root, String binyan) {
+Map<String, String> conjugateFuture(
+  String root,
+  String binyan, {
+  Gizrah gizrah = Gizrah.automatic,
+}) {
   if (!isSupportedRoot(root, binyan)) return {'root': root};
-  return _finalize(_conjugateFuture(rootSlots(root), binyan));
+  return _finalize(_conjugateFuture(rootSlots(root), binyan, gizrah));
 }
 
 /// The Hitpael prefix consonant together with the first radical, written in the
@@ -127,11 +144,15 @@ String geminate(String middleSlot, String vowel) {
   return '$middleSlot$vowel$dagesh';
 }
 
-Map<String, String> _createInfinitive(List<String> root, String binyan) {
+Map<String, String> _createInfinitive(List<String> root, String binyan, Gizrah gizrah) {
 
     switch(binyan) {
         case 'Paal':
-            if(isLamedHe(root))
+            if(gizrah == Gizrah.droppingFirst)
+                return <String, String> {
+                    'inf': "ל${vowels['A']}${root[1]}${vowels['E']}${root[2]}${vowels['E']}ת"
+                };
+            else if(isLamedHe(root))
                 return <String, String> {
                     'inf': "ל${vowels['i']}${root[0]}${vowels['_e']}${root[1]}וֹת"
                 };
@@ -148,18 +169,34 @@ Map<String, String> _createInfinitive(List<String> root, String binyan) {
                     'inf': "ל${vowels['i']}${root[0]}${vowels['_e']}${root[1]}וֹ${root[2]}"
                 };
         case 'Piel':
+            if(isLamedHe(root))
+                return <String, String> {
+                    'inf': "ל${vowels['_e']}${root[0]}${vowels['a']}${geminate(root[1], '')}וֹת"
+                };
             return <String, String> {
                 'inf': "ל${vowels['_e']}${root[0]}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}"
             };
         case 'Hiphil':
+            if(isLamedHe(root))
+                return <String, String> {
+                    'inf': "ל${vowels['_e']}ה${vowels['a']}${root[0]}${vowels['_e']}${root[1]}וֹת"
+                };
             return <String, String> {
                 'inf': "ל${vowels['_e']}ה${vowels['a']}${root[0]}${vowels['_e']}${root[1]}${vowels['i']}י${root[2]}"
             };
         case 'Hitpael': 
+            if(isLamedHe(root))
+                return <String, String> {
+                    'inf': "ל${vowels['_e']}ה${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], '')}וֹת"
+                };
             return <String, String> {
                 'inf': "ל${vowels['_e']}ה${vowels['i']}${hitpaelOnset(root[0], vowels['_e']!)}${vowels['a']}${geminate(root[1], vowels['e']!)}${root[2]}"
             };
         case 'Nifal':
+            if(isLamedHe(root))
+                return <String, String> {
+                    'inf': "לְהִ${root[0]}${vowels['A']}${root[1]}וֹת"
+                };
             return <String, String> {
                 'inf': "לְהִ${root[0]}${vowels['A']}${root[1]}${vowels['e']}${root[2]}"
             };
@@ -178,7 +215,7 @@ Map<String, String> _createInfinitive(List<String> root, String binyan) {
     }
 }
 
-Map<String, String> _conjugatePresent(List<String> root, String binyan) {
+Map<String, String> _conjugatePresent(List<String> root, String binyan, Gizrah gizrah) {
 
     switch(binyan) {
         case 'Paal':
@@ -250,7 +287,7 @@ Map<String, String> _conjugatePresent(List<String> root, String binyan) {
       }
 }
 
-Map<String, String> _conjugatePast(List<String> root, String binyan) {
+Map<String, String> _conjugatePast(List<String> root, String binyan, Gizrah gizrah) {
     
     switch (binyan) {
         case 'Paal':
@@ -368,7 +405,7 @@ Map<String, String> _conjugatePast(List<String> root, String binyan) {
     }
 }
 
-Map<String, String> _conjugateFuture(List<String> root, String binyan) {
+Map<String, String> _conjugateFuture(List<String> root, String binyan, Gizrah gizrah) {
 
     switch(binyan) {
         case 'Paal':

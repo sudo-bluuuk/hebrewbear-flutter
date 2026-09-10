@@ -13,6 +13,7 @@ void main() {
     root: 'כתב',
     translate: 'write',
     type: 'Paal',
+    gizrah: 'automatic',
   );
 
   Future<void> pumpButtonsAt(WidgetTester tester, double width) {

@@ -4,6 +4,7 @@ import 'package:drift/native.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:hebrewbear/data/conjugation.dart';
+import 'package:hebrewbear/data/gizrah.dart';
 import 'package:hebrewbear/data/wordtypes.dart';
 
 part 'dbmanager.g.dart';
@@ -13,6 +14,11 @@ class WordsSchema extends Table {
   TextColumn get root => text()();
   TextColumn get translate => text()();
   TextColumn get type => text()();
+
+  /// How the root conjugates, where the letters do not settle it. Defaults to
+  /// automatic, which is what every row written before this column existed
+  /// meant implicitly.
+  TextColumn get gizrah => text().withDefault(const Constant('automatic'))();
 }
 
 /// Forms the user has corrected by hand, replacing the generated ones.
@@ -49,7 +55,11 @@ class WordEntry {
 
   /// The corrected infinitive when there is one, otherwise the generated form.
   String get infinitive =>
-      infinitiveOverride ?? createInfinitive(word.root, word.type).values.first;
+      infinitiveOverride ??
+      createInfinitive(word.root, word.type,
+              gizrah: gizrahFromName(word.gizrah))
+          .values
+          .first;
 }
 
 LazyDatabase _openConnection() {
@@ -77,13 +87,14 @@ class WordsDB extends _$WordsDB {
   static const String infinitiveKey = 'inf';
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
         onCreate: (m) => m.createAll(),
         onUpgrade: (m, from, to) async {
           if (from < 2) await m.createTable(conjugationOverrides);
+          if (from < 3) await m.addColumn(wordsSchema, wordsSchema.gizrah);
         },
         beforeOpen: (details) async {
           // Required for the override rows to be removed with their word.
