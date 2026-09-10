@@ -45,3 +45,10 @@ app.*.map.json
 
 # Makefile stamp for the codegen step
 /generated
+
+# Distributable bundle, rebuilt by `make flatpak`
+/.flatpak-builder/
+/flatpak/.build.yml
+/arch/pkg/
+/arch/src/
+/dist/

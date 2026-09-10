@@ -7,24 +7,28 @@ their forms are generated on demand; nouns and adjectives are stored as written.
 
     make dev       run the app with hot reload
     make test      analyse and run the test suite
-    make flatpak   build hebrewbear.flatpak, a single file to send to someone
+    make share     show what has been built and how to install each
 
-`make` on its own lists them. Codegen (drift) is part of every target, so a
+`make` on its own lists them all. Codegen (drift) is part of every target, so a
 fresh checkout needs nothing else.
 
-### Building the flatpak
+## Sending it to someone
 
-One time:
+Everything lands in `dist/`, and each build prints the file to send along with
+the command the recipient runs.
 
-    make flatpak-deps
+| Build | They get | Works on |
+| --- | --- | --- |
+| `make arch` | 11 MB package, `gtk3` its only dependency | Arch only |
+| `make flatpak` | 8.5 MB bundle, plus the GNOME runtime if they lack it | any distro |
+| `make flatpak-kde` | same, against the KDE runtime instead | any distro |
 
-Then `make flatpak` produces `hebrewbear.flatpak`. Whoever you send it to
-installs it with:
+Prefer `make arch` if they run Arch — a tenth of the download and no runtime.
+Otherwise pick the flatpak whose runtime they already have; ask them to run
+`flatpak list --runtime | grep -E 'gnome|kde'`.
 
-    flatpak install --user ./hebrewbear.flatpak
-    flatpak run io.github.sudo_bluuuk.HebrewBear
-
-`make install-local` builds and installs it here, to see what they will get.
+The flatpak build needs `make flatpak-deps` once. `make install-local` builds
+and installs it here so you can see what they will get before sending.
 
 ## Conjugation
 

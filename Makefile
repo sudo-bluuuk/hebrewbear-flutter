@@ -1,10 +1,20 @@
 # One-line commands. Run `make` on its own to see them.
-APP_ID  := io.github.sudo_bluuuk.HebrewBear
-RUNTIME := 49
-BUNDLE  := hebrewbear.flatpak
+APP_ID := io.github.sudo_bluuuk.HebrewBear
 
-.DEFAULT_GOAL := help
-.PHONY: help dev run test flatpak flatpak-deps install-local clean
+# Which runtime the flatpak targets. Flutter's Linux embedder is GTK-based, so
+# the runtime only has to provide GTK3 — GNOME and KDE both do.
+RUNTIME_ID  ?= org.gnome.Platform
+RUNTIME_VER ?= 49
+SDK_ID      := $(subst Platform,Sdk,$(RUNTIME_ID))
+
+# Everything meant for someone else lands here, so there is one place to look.
+DIST     := dist
+BUNDLE   ?= $(DIST)/hebrewbear.flatpak
+MANIFEST := flatpak/.build.yml
+
+# `arch` and `dist` are also directory names; without this make sees the
+# directory, decides the target is already satisfied and does nothing.
+.PHONY: help dev test flatpak flatpak-kde arch share flatpak-deps install-local clean
 
 help:  ## Show this list
 	@grep -hE '^[a-z-]+:.*?## ' $(MAKEFILE_LIST) \
@@ -17,6 +27,9 @@ generated: pubspec.yaml lib/data/dbmanager.dart
 	dart run build_runner build
 	@touch generated
 
+release: generated
+	flutter build linux --release
+
 dev: generated  ## Run the app with hot reload
 	flutter run -d linux
 
@@ -24,24 +37,41 @@ test: generated  ## Analyse and run the test suite
 	flutter analyze
 	flutter test
 
-flatpak: generated  ## Build a single .flatpak file to send to someone
-	flutter build linux --release
+# Written next to the real manifest so its relative source paths still resolve.
+$(MANIFEST): flatpak/$(APP_ID).yml
+	sed -e 's|^runtime: .*|runtime: $(RUNTIME_ID)|' \
+	    -e "s|^runtime-version: .*|runtime-version: '$(RUNTIME_VER)'|" \
+	    -e 's|^sdk: .*|sdk: $(SDK_ID)|' $< > $@
+
+flatpak: release $(MANIFEST)  ## Build a .flatpak — works on any distro
+	@mkdir -p $(DIST)
 	flatpak-builder --user --force-clean --install-deps-from=flathub \
-		--repo=build/flatpak-repo build/flatpak-build \
-		flatpak/$(APP_ID).yml
+		--repo=build/flatpak-repo build/flatpak-build $(MANIFEST)
 	flatpak build-bundle build/flatpak-repo $(BUNDLE) $(APP_ID)
-	@echo
-	@echo "Built $(BUNDLE) ($$(du -h $(BUNDLE) | cut -f1)). Send it over; they install with:"
-	@echo "  flatpak install --user ./$(BUNDLE)"
+	@tools/announce.sh $(BUNDLE)
+
+flatpak-kde:  ## Same, against the KDE runtime instead of GNOME
+	$(MAKE) flatpak RUNTIME_ID=org.kde.Platform RUNTIME_VER=6.10 \
+		BUNDLE=$(DIST)/hebrewbear-kde.flatpak
+
+arch: release  ## Build an Arch package — smallest, but Arch only
+	@mkdir -p $(DIST)
+	cd arch && PKGDEST=$(CURDIR)/$(DIST) makepkg --force --nodeps
+	@tools/announce.sh $$(ls -1t $(DIST)/*.pkg.tar.zst | head -1)
+
+share:  ## Show everything built so far and how to install each
+	@tools/announce.sh $(DIST)/*
 
 flatpak-deps:  ## Install what the flatpak build needs (one time)
 	sudo pacman -S --needed flatpak-builder
-	flatpak install --user -y flathub org.gnome.Platform//$(RUNTIME) org.gnome.Sdk//$(RUNTIME)
+	flatpak install --user -y flathub \
+		$(RUNTIME_ID)//$(RUNTIME_VER) $(SDK_ID)//$(RUNTIME_VER)
 
-install-local: flatpak  ## Build and install it here, to check what Dudu will get
+install-local: flatpak  ## Build and install here, to see what they will get
 	flatpak install --user -y --reinstall ./$(BUNDLE)
 	@echo "Installed. Run with: flatpak run $(APP_ID)"
 
 clean:  ## Remove build output
 	flutter clean
-	rm -rf build/flatpak-repo build/flatpak-build $(BUNDLE) generated
+	rm -rf build/flatpak-repo build/flatpak-build $(MANIFEST) $(DIST) generated
+	rm -rf arch/pkg arch/src

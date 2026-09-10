@@ -35,7 +35,15 @@ modules:
         /app/share/applications/io.github.sudo_bluuuk.HebrewBear.desktop
       - install -Dm644 io.github.sudo_bluuuk.HebrewBear.metainfo.xml
         /app/share/metainfo/io.github.sudo_bluuuk.HebrewBear.metainfo.xml
-      - install -Dm644 icon.png
+      # Each size must actually match the directory it lands in — flatpak
+      # rejects the export otherwise, and caps icons at 512x512.
+      - install -Dm644 icons/64.png
+        /app/share/icons/hicolor/64x64/apps/io.github.sudo_bluuuk.HebrewBear.png
+      - install -Dm644 icons/128.png
+        /app/share/icons/hicolor/128x128/apps/io.github.sudo_bluuuk.HebrewBear.png
+      - install -Dm644 icons/256.png
+        /app/share/icons/hicolor/256x256/apps/io.github.sudo_bluuuk.HebrewBear.png
+      - install -Dm644 icons/512.png
         /app/share/icons/hicolor/512x512/apps/io.github.sudo_bluuuk.HebrewBear.png
     sources:
       - type: dir
@@ -45,5 +53,6 @@ modules:
         path: io.github.sudo_bluuuk.HebrewBear.desktop
       - type: file
         path: io.github.sudo_bluuuk.HebrewBear.metainfo.xml
-      - type: file
-        path: ../assets/icon/icon.png
+      - type: dir
+        path: icons
+        dest: icons

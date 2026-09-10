@@ -3,6 +3,7 @@ import 'package:hebrewbear/data/conjugation.dart';
 import 'package:hebrewbear/data/corrections.dart';
 import 'package:hebrewbear/data/dbmanager.dart';
 import 'package:hebrewbear/data/gizrah.dart';
+import 'package:hebrewbear/data/pronouns.dart';
 import 'package:hebrewbear/layouts/conjugation/editform.dart';
 import 'package:hebrewbear/widgets/cell.dart';
 import 'package:hebrewbear/widgets/stripe.dart';
@@ -42,7 +43,12 @@ class _ConjugationState extends State<Conjugation> {
     fontFamily: 'Noto Serif Hebrew',
   );
 
-  static const TextStyle _textStyle = TextStyle(fontSize: 26);
+  /// The label column is Hebrew too, set smaller and quieter so the form
+  /// being taught stays the thing the eye lands on.
+  static const TextStyle _labelTextStyle = TextStyle(
+    fontSize: 20,
+    fontFamily: 'Noto Serif Hebrew',
+  );
 
   Gizrah get _gizrah => gizrahFromName(word.gizrah);
 
@@ -125,7 +131,7 @@ class _ConjugationState extends State<Conjugation> {
                 Padding(
                   padding: const EdgeInsets.all(12.0),
                   child: Text(
-                    'Tap a row to correct a form.',
+                    'Hover a label for its meaning. Tap a row to correct a form.',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
                 ),
@@ -179,7 +185,17 @@ class _ConjugationState extends State<Conjugation> {
       children: [
         HebrewBearCell(
           onTap: onTap,
-          child: Text(label, style: _textStyle),
+          // The English name is the tooltip rather than the label: it is what
+          // the reader needs occasionally, not every time.
+          child: Tooltip(
+            message: label,
+            child: Text(
+              hebrewLabelFor(person),
+              style: _labelTextStyle.copyWith(
+                color: Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+            ),
+          ),
         ),
         HebrewBearCell(
           onTap: onTap,

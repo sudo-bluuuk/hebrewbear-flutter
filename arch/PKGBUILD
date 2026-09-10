@@ -1,0 +1,47 @@
+# Packages the release bundle Flutter has already built, rather than building
+# from source: makepkg would otherwise need the whole Flutter SDK inside its
+# build environment for no benefit on a machine that already has it.
+#
+# Local-build PKGBUILD — it reads from ../build, so it is not AUR-ready as is.
+pkgname=hebrewbear
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Hebrew vocabulary with root-based verb conjugation"
+arch=('x86_64')
+url="https://github.com/sudo-bluuuk/hebrewbear-flutter"
+license=('LicenseRef-proprietary')
+depends=('gtk3')
+# Flutter ships an AOT snapshot inside libapp.so; leave the binaries alone
+# rather than risk makepkg's strip touching it.
+options=(!strip !debug)
+
+_appid=io.github.sudo_bluuuk.HebrewBear
+
+package() {
+  local repo="$startdir/.."
+  local bundle="$repo/build/linux/x64/release/bundle"
+
+  if [[ ! -x "$bundle/$pkgname" ]]; then
+    echo "==> Missing $bundle — run 'flutter build linux --release' first." >&2
+    return 1
+  fi
+
+  # Kept together: the executable finds its libraries through RUNPATH
+  # $ORIGIN/lib and its assets through /proc/self/exe, both of which resolve
+  # the symlink below to this directory.
+  install -d "$pkgdir/usr/lib/$pkgname"
+  cp -r "$bundle/." "$pkgdir/usr/lib/$pkgname/"
+
+  install -d "$pkgdir/usr/bin"
+  ln -s "/usr/lib/$pkgname/$pkgname" "$pkgdir/usr/bin/$pkgname"
+
+  install -Dm644 "$repo/flatpak/$_appid.desktop" \
+    "$pkgdir/usr/share/applications/$_appid.desktop"
+  install -Dm644 "$repo/flatpak/$_appid.metainfo.xml" \
+    "$pkgdir/usr/share/metainfo/$_appid.metainfo.xml"
+
+  for size in 64 128 256 512; do
+    install -Dm644 "$repo/flatpak/icons/$size.png" \
+      "$pkgdir/usr/share/icons/hicolor/${size}x${size}/apps/$_appid.png"
+  done
+}
