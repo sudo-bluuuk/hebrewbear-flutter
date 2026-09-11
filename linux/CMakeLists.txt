@@ -7,7 +7,11 @@ project(runner LANGUAGES CXX)
 set(BINARY_NAME "hebrewbear")
 # The unique GTK application identifier for this application. See:
 # https://wiki.gnome.org/HowDoI/ChooseApplicationID
-set(APPLICATION_ID "com.example.hebrewbear")
+# Must match the .desktop file name: on Wayland the compositor finds a window's
+# icon by matching its app_id to an installed .desktop file. A mismatch shows
+# the generic icon in the taskbar while search, which reads the .desktop file
+# directly, still looks correct.
+set(APPLICATION_ID "io.github.sudo_bluuuk.HebrewBear")
 
 # Explicitly opt in to modern CMake behaviors to avoid warnings with recent
 # versions of CMake.

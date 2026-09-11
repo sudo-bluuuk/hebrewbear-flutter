@@ -12,6 +12,13 @@ DIST     := dist
 BUNDLE   ?= $(DIST)/hebrewbear.flatpak
 MANIFEST := flatpak/.build.yml
 
+BUNDLE_DIR := build/linux/x64/release/bundle
+# The sqlite3 package builds this through a Dart build hook, but Flutter does
+# not copy it into the app bundle. Without it the app falls back to dlopen'ing
+# the system libsqlite3.so — which exists on a dev machine and does NOT exist
+# inside a flatpak, where the runtime ships only the versioned soname.
+NATIVE_SQLITE := build/native_assets/linux/libsqlite3.so
+
 # `arch` and `dist` are also directory names; without this make sees the
 # directory, decides the target is already satisfied and does nothing.
 .PHONY: help dev test flatpak flatpak-kde arch share flatpak-deps install-local clean
@@ -29,6 +36,12 @@ generated: pubspec.yaml lib/data/dbmanager.dart
 
 release: generated
 	flutter build linux --release
+	@test -f $(NATIVE_SQLITE) || { \
+		echo "ERROR: $(NATIVE_SQLITE) missing — the sqlite3 build hook did not run."; \
+		echo "       Try: flutter clean && make release"; exit 1; }
+	@# libflutter_linux_gtk.so has RUNPATH $$ORIGIN, so lib/ is where dlopen looks.
+	install -m644 $(NATIVE_SQLITE) $(BUNDLE_DIR)/lib/
+	@tools/check-bundle.sh $(BUNDLE_DIR)
 
 dev: generated  ## Run the app with hot reload
 	flutter run -d linux
@@ -67,8 +80,9 @@ flatpak-deps:  ## Install what the flatpak build needs (one time)
 	flatpak install --user -y flathub \
 		$(RUNTIME_ID)//$(RUNTIME_VER) $(SDK_ID)//$(RUNTIME_VER)
 
-install-local: flatpak  ## Build and install here, to see what they will get
+install-local: flatpak  ## Build, install here and smoke-test what they will get
 	flatpak install --user -y --reinstall ./$(BUNDLE)
+	@tools/smoke.sh $(APP_ID)
 	@echo "Installed. Run with: flatpak run $(APP_ID)"
 
 clean:  ## Remove build output
